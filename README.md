@@ -1,0 +1,2 @@
+# errnie
+Go error handling
