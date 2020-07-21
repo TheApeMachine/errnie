@@ -29,7 +29,7 @@ func TestCheck(t *testing.T) {
 	defer check.Validate(t)
 	defer guard.Rescue()()
 
-	guard.err = errors.New("errors rule, call stacks drool")
+	guard.Err = errors.New("errors rule, call stacks drool")
 	guard.Check()
 }
 
@@ -38,8 +38,8 @@ func TestPanic(t *testing.T) {
 	defer check.Validate(t)
 	defer guard.Rescue()()
 
-	guard.err = errors.New("errors rule, call stacks drool")
-	panic(guard.err)
+	guard.Err = errors.New("errors rule, call stacks drool")
+	panic(guard.Err)
 }
 
 func TestCheckPanic(t *testing.T) {
@@ -47,7 +47,7 @@ func TestCheckPanic(t *testing.T) {
 	defer check.Validate(t)
 	defer guard.Rescue()()
 
-	guard.err = errors.New("errors rule, call stacks drool")
+	guard.Err = errors.New("errors rule, call stacks drool")
 	guard.Check()
-	panic(guard.err)
+	panic(guard.Err)
 }

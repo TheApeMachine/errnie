@@ -6,7 +6,7 @@ import (
 )
 
 type Guard struct {
-	err     error
+	Err     error
 	handler func()
 }
 
@@ -20,8 +20,8 @@ func NewGuard(handler func()) *Guard {
 }
 
 func (guard *Guard) Check() {
-	if guard.err != nil {
-		panic(guard.err)
+	if guard.Err != nil {
+		panic(guard.Err)
 	}
 }
 
@@ -31,9 +31,9 @@ This method should be called at the top of another method as a deferred call.
 */
 func (guard *Guard) Rescue() func() {
 	return func() {
-		if r := recover(); r != nil || guard.err != nil {
+		if r := recover(); r != nil || guard.Err != nil {
 			if guard.handler == nil {
-				log.Println(fmt.Sprintf("%v:%v", r, guard.err))
+				log.Println(fmt.Sprintf("%v:%v", r, guard.Err))
 				return
 			}
 
