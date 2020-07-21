@@ -3,7 +3,7 @@
 
 One day none of our functions or methods will ever crash again
 and we will all be drinking half-pints on the beach.
-Because we're not barbarics.
+Because we're not barbarians.
 
 ## Installation
 
