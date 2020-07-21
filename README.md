@@ -23,6 +23,10 @@ func main() {
 	// Load the guard with an error.
 	guard.Err := errors.New("errors rule, call-stacks drool!")
 
+	// Call Check() to evaluate the error and determine whether
+	// or not to short-circuit the function.
+	guard.Check()
+
 	// Or simply write some code that panics.
 	panic("don't")
 }
