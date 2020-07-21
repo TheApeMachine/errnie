@@ -1,6 +1,12 @@
 # errnie
 (Second) Go (at an) error handling package.
 
+## Installation
+
+```bash
+go get -u github.com/TheApeMachine/errnie
+```
+
 ## Basic usage
 ```go
 package main
