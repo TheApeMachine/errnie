@@ -17,7 +17,7 @@ func main() {
 	defer guard.Rescue()()
 
 	// Load the guard with an error.
-	guard.err := errors.New("errors rule, call-stacks drool!")
+	guard.Err := errors.New("errors rule, call-stacks drool!")
 
 	// Or simply write some code that panics.
 	panic("don't")
