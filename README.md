@@ -70,7 +70,7 @@ func (jm *JustMy) MethodMan() {
 
 	// Make sure we do not have an error and call Check.
 	// This will not short-circuit the method.
-	jm.guard.Err := nil
+	jm.guard.Err = nil
 	jm.guard.Check()
 
 	// Where the magic happens... This simulates an unhandled
