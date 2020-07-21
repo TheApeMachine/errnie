@@ -117,7 +117,7 @@ func (weapon *Weapon) Reload() {
 handleError should recover the state of the type.
 */
 func (weapon *Weapon) handleError {
-	if weapon.guard.Err == NoArrowsLeftError {
+	if weapon.guard.Err == NoBulletsLeftError {
 		weapon.reload()
 	}
 }
