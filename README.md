@@ -1,6 +1,10 @@
 # errnie
 (Second) Go (at an) error handling package.
 
+One day none of our functions or methods will ever crash again
+and we will all be drinking half-pints on the beach.
+Because we're not barbarics.
+
 ## Installation
 
 ```bash
@@ -23,7 +27,9 @@ func main() {
 	panic("don't")
 }
 
-// All code above leads to here.
+/*
+All code above leads to here.
+*/
 func errorHandler() {
 	// Do some...
 }
@@ -34,22 +40,29 @@ func errorHandler() {
 ```go
 package myaveragepackage
 
-// JustMy type, really really.
+/*
+JustMy type, really really.
+*/
 type JustMy struct {
 	guard *errnie.Guard
 }
 
-// NewJustMy returns a pointer to an instance of JustMy.
+/*
+NewJustMy returns a pointer to an instance of JustMy.
+*/
 func NewJustMy() *JustMy {
 	jm := JustMy{}
 	jm.guard = errnie.NewGuard(jm.handleError)
 }
 
-// MethodMan the most typical use-case, where you catch your errors inside the guard, and call a check instead of
-// the standard if statement pattern.
+/*
+MethodMan the most typical use-case, where you catch your errors inside the guard,
+and call a check instead of the standard if statement pattern.
+*/
 func (jm *JustMy) MethodMan() {
 	defer jm.Rescue()()
-	// Optionally you can start with calling jm.guard.Check() here if you want to implement the early short-circuit.
+	// Optionally you can start with calling jm.guard.Check() here if you want to
+	// implement the early short-circuit.
 
 	// Make sure we do not have an error and call Check.
 	// This will not short-circuit the method.
@@ -61,8 +74,51 @@ func (jm *JustMy) MethodMan() {
 	val := 42 / 0
 }
 
-// handleError, because that's kinda what we're doing here. It's the law.
+/*
+handleError, because that's kinda what we're doing here. It's the law.
+*/
 func (jm *JustMy) handleError() {
 	fmt.Println(jm.guard.Err)
+}
+```
+
+## WIP: Usage with custom errors
+```go
+package robocop
+
+type NoBulletsLeftError errnie.Error
+
+/*
+Weapon wraps the Auto 9 in a type.
+*/
+type Weapon struct {
+	bullets uint
+	guard errnie.Guard
+}
+
+/*
+NewWeapon returns a pointer to an instance of Weapon.
+*/
+func NewWeapon() *Weapon {
+	w := Weapon{}
+	w.guard = errnie.NewGuard(w.handleError)
+}
+
+/*
+Reload simulates some sort of fault-tolerant method that recovers the state
+of the type such that it can resume operation.
+*/
+func (weapon *Weapon) Reload() {
+	// Source: https://robocop.fandom.com/wiki/Auto_9
+	weapon.bullets = 50
+}
+
+/*
+handleError should recover the state of the type.
+*/
+func (weapon *Weapon) handleError {
+	if weapon.guard.Err == NoArrowsLeftError {
+		weapon.reload()
+	}
 }
 ```
