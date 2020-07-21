@@ -111,6 +111,11 @@ SprayAndPray. Look at something that moves, vaguely point in that direction
 and call in infinite for loop.
 */
 func (weapon *Weapon) SprayAndPray() {
+	if weapon.bullets == 0 {
+		weapon.guard.Err = NoBulletsLeftError
+		weapon.guard.Check()
+	}
+
 	weapon.bullets--
 }
 
