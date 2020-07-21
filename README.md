@@ -90,6 +90,8 @@ type NoBulletsLeftError errnie.Error
 
 /*
 Weapon wraps the Auto 9 in a type.
+I am relatively sure this is how they implemented those infinite magazines
+in the 80s/90s action movies.
 */
 type Weapon struct {
 	bullets uint
@@ -100,15 +102,23 @@ type Weapon struct {
 NewWeapon returns a pointer to an instance of Weapon.
 */
 func NewWeapon() *Weapon {
-	w := Weapon{}
+	w := Weapon{bullets: 50}
 	w.guard = errnie.NewGuard(w.handleError)
+}
+
+/*
+SprayAndPray. Look at something that moves, vaguely point in that direction
+and call in infinite for loop.
+*/
+func (weapon *Weapon) SprayAndPray() {
+	weapon.bullets--
 }
 
 /*
 Reload simulates some sort of fault-tolerant method that recovers the state
 of the type such that it can resume operation.
 */
-func (weapon *Weapon) Reload() {
+func (weapon *Weapon) reload() {
 	// Source: https://robocop.fandom.com/wiki/Auto_9
 	weapon.bullets = 50
 }
