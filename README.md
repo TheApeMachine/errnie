@@ -8,7 +8,7 @@ package main
 func main() {
 	// Instantiate a new guard object and defer a Recue call.
 	guard := NewGuard(error_handler)
-	defer guard.Rescue()
+	defer guard.Rescue()()
 
   // Load the guard with an error.
 	guard.err := errors.New("errors rule, call-stacks drool!")

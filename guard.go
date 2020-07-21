@@ -19,6 +19,12 @@ func NewGuard(handler func()) *Guard {
 	}
 }
 
+func (guard *Guard) Check() {
+	if guard.err != nil {
+		panic(guard.err)
+	}
+}
+
 /*
 Rescue a method from errors and panics.
 This method should be called at the top of another method as a deferred call.
@@ -33,5 +39,5 @@ func (guard *Guard) Rescue() func() {
 
 			guard.handler()
 		}
-	}()
+	}
 }
