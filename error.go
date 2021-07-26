@@ -1,10 +1,22 @@
 package errnie
 
+type ErrType uint
+
+const (
+	PANIC ErrType = iota
+	FATAL
+	CRITICAL
+	ERROR
+	WARNING
+	INFO
+	DEBUG
+)
+
 type Error struct {
-	Message string
-	Detail  interface{}
+	err     error
+	errType ErrType
 }
 
-func (e Error) Error() string {
-	return e.Message
+func (wrapper Error) Error() error {
+	return wrapper.err
 }
