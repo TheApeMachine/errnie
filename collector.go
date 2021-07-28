@@ -99,21 +99,28 @@ validation on it to see if there is anything more we should do.
 func (collector Collector) handle(err error, errType ErrType) *Collector {
 	switch errType {
 	case PANIC:
+		pterm.Fatal.ShowLineNumber = true
 		pterm.Fatal.Println(err)
 		panic(err)
 	case FATAL:
+		pterm.Fatal.ShowLineNumber = true
 		pterm.Fatal.Println(err)
 		os.Exit(1)
 	case CRITICAL:
+		pterm.Error.ShowLineNumber = true
 		pterm.Error.Println(err)
 		os.Exit(1)
 	case ERROR:
+		pterm.Error.ShowLineNumber = true
 		pterm.Error.Println(err)
 	case WARNING:
+		pterm.Warning.ShowLineNumber = true
 		pterm.Warning.Println(err)
 	case INFO:
+		pterm.Info.ShowLineNumber = true
 		pterm.Info.Println(err)
 	case DEBUG:
+		pterm.Debug.ShowLineNumber = true
 		pterm.Debug.Println(err)
 	}
 
