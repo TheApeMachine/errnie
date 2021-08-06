@@ -1,10 +1,11 @@
 package errnie
 
 import (
-	"os"
+	"fmt"
+
+	"container/ring"
 
 	"github.com/pterm/pterm"
-	"github.com/spf13/viper"
 )
 
 /*
@@ -12,110 +13,74 @@ ErrCollector is the canonical implementation of the underlying
 interface. Use this as a field in your object to handle errors.
 */
 type Collector struct {
-	stack   []Error
+	advisor Advisor
+	stack   *ring.Ring
 	printer pterm.PrefixPrinter
 }
 
 /*
 New acts as a constructor and returns an instance of Collector.
 */
-func New() *Collector {
+func New(advisor *Advisor) *Collector {
 	pterm.PrintDebugMessages = true
 
+	// Explain later...
+	finalAdvisor := NewAdvisor(RookieAdvisor{})
+
+	if advisor != nil {
+		finalAdvisor = *advisor
+	}
+
 	return &Collector{
+		advisor: finalAdvisor,
+		stack:   ring.New(20),
 		printer: pterm.PrefixPrinter{},
 	}
 }
 
 /*
-Stack appends exactly one error to the in-memory stack of
-errors we have collected. We also have to allocate on the first
-call. So as long as we don't use the object yet, it will not
-be allocated. Good for memory.
+Stack is a circular buffer that holds a certain amount of recent errors that
+were collected. The basic concept is to have a real-time sample we can analyze
+at any time to determine the health of our application. It is therefor recommended
+to send one errnie down an entire call stack, and the longer you keep him alive,
+the more useful he is across multiple domains in your code.
 */
 func (collector *Collector) Stack(err error, errType ErrType) *Collector {
-	if err != nil && collector.stack == nil {
-		collector.stack = make([]Error, 0)
-	}
-
 	if err != nil {
-		collector.stack = append(collector.stack, Error{
+		// Add a new Error object to the circular buffer.
+		collector.stack.Value = Error{
 			err:     err,
 			errType: errType,
-		})
+		}
 
-		collector.handle(err, errType)
+		// Proceed one unit down the buffer so we are ready
+		// on the next call coming for us.
+		collector.stack.Next()
 	}
 
+	// Return a reference to ourselves so we get chainable methods.
 	return collector
 }
 
 /*
-Dump the error stack.
+Dump the error stack. This prints our the raw Error object data and is
+not a method you want to use in any code that is not in debug mode.
 */
 func (collector Collector) Dump() {
-	for _, err := range collector.stack {
-		collector.Debug(err.err.Error())
-	}
+	// Iterate through the buffer and dumps each unit's contents.
+	collector.stack.Do(func(p interface{}) {
+		fmt.Println(p.(Error))
+	})
 }
 
 /*
-Info is a pretty printed info line.
+OK takes an advisor interface and uses it to determine the calculated state of
+the runtime environment. At any time call this to get an advice on whether or
+not something drastic like a restart, fatal, or panic should be performed.
+Errnie comes with a default (naive) implementation of an advisor, however the
+most benefit can be obtained by providing something more custom to your situation.
 */
-func (collector Collector) Info(msg string) {
-	pterm.Info.Println(msg)
-}
-
-/*
-Debug is a pretty printed info line.
-*/
-func (collector Collector) Debug(msg string) {
-	// Don't print noise if we are not in debug mode.
-	if !viper.GetBool("debug") {
-		return
-	}
-
-	pterm.Debug.Println(msg)
-}
-
-/*
-Bad indicates the current state of the system as calculated
-over the entries on the stack.
-*/
-func (collector Collector) Bad() bool {
-	for _, item := range collector.stack {
-		if item.errType == PANIC || item.errType == FATAL {
-			return true
-		}
-	}
-
-	return false
-}
-
-/*
-handle takes the last error added to the stack and rund a basic
-validation on it to see if there is anything more we should do.
-*/
-func (collector Collector) handle(err error, errType ErrType) *Collector {
-	switch errType {
-	case PANIC:
-		pterm.Fatal.Println(err)
-		panic(err)
-	case FATAL:
-		pterm.Fatal.Println(err)
-		os.Exit(1)
-	case CRITICAL:
-		pterm.Error.Println(err)
-		os.Exit(1)
-	case ERROR:
-		pterm.Error.Println(err)
-	case WARNING:
-		pterm.Warning.Println(err)
-	case INFO:
-		pterm.Info.Println(err)
-	case DEBUG:
-		pterm.Debug.Println(err)
-	}
-
-	return &collector
+func (collector Collector) OK() bool {
+	// We don't support dynamic yet.
+	return collector.advisor.Static(*collector.stack)
 }
