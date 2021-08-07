@@ -69,7 +69,9 @@ not a method you want to use in any code that is not in debug mode.
 func (collector Collector) Dump() {
 	// Iterate through the buffer and dumps each unit's contents.
 	collector.stack.Do(func(p interface{}) {
-		fmt.Println(p.(Error))
+		if p != nil {
+			fmt.Println(p.(Error))
+		}
 	})
 }
 
