@@ -12,10 +12,22 @@ func (collector Collector) Panic(msg string) { pterm.Fatal.Println(msg); panic(n
 func (collector Collector) Fatal(msg string) { pterm.Fatal.Println(msg) }
 
 /* Critical is a pretty printed critical line. */
-func (collector Collector) Critical(msg string) { pterm.Error.Println(msg) }
+func (collector Collector) Critical(msg *string) {
+	if msg == nil {
+		return
+	}
+
+	pterm.Error.Println(*msg)
+}
 
 /* Error is a pretty printed error line. */
-func (collector Collector) Error(msg string) { pterm.Error.Println(msg) }
+func (collector Collector) Error(msg *string) {
+	if msg == nil {
+		return
+	}
+
+	pterm.Error.Println(*msg)
+}
 
 /* Info is a pretty printed info line. */
 func (collector Collector) Info(msg string) { pterm.Info.Println(msg) }
