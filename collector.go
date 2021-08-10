@@ -47,19 +47,30 @@ the more useful he is across multiple domains in your code.
 */
 func (collector *Collector) Stack(err error, errType ErrType) *Collector {
 	if err != nil {
-		// Add a new Error object to the circular buffer.
-		collector.stack.Value = Error{
-			err:     err,
-			errType: errType,
-		}
-
-		// Proceed one unit down the buffer so we are ready
-		// on the next call coming for us.
-		collector.stack.Next()
+		return collector
 	}
+
+	// Add a new Error object to the circular buffer.
+	collector.stack.Value = Error{
+		err:     err,
+		errType: errType,
+	}
+
+	// Proceed one unit down the buffer so we are ready
+	// on the next call coming for us.
+	collector.stack.Next()
 
 	// Return a reference to ourselves so we get chainable methods.
 	return collector
+}
+
+func (collector *Collector) StackOut(err error, errType ErrType) *Collector {
+	if err != nil {
+		return collector
+	}
+
+	collector.print(err, errType)
+	return collector.Stack(err, errType)
 }
 
 /*

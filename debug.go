@@ -5,6 +5,28 @@ import (
 	"github.com/spf13/viper"
 )
 
+/* print is a high-level method to select the correct typed error output printer. */
+func (collector Collector) print(err error, errType ErrType) {
+	msg := err.Error()
+
+	switch errType {
+	case PANIC:
+		collector.Panic(msg)
+	case FATAL:
+		collector.Fatal(msg)
+	case CRITICAL:
+		collector.Critical(msg)
+	case ERROR:
+		collector.Error(msg)
+	case INFO:
+		collector.Info(msg)
+	case WARNING:
+		collector.Warn(msg)
+	case DEBUG:
+		collector.Debug(msg)
+	}
+}
+
 /* Panic is a pretty printed panic line. */
 func (collector Collector) Panic(msg ...interface{}) { pterm.Fatal.Println(msg); panic(nil) }
 
