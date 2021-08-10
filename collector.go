@@ -46,7 +46,7 @@ to send one errnie down an entire call stack, and the longer you keep him alive,
 the more useful he is across multiple domains in your code.
 */
 func (collector *Collector) Stack(err error, errType ErrType) *Collector {
-	if err != nil {
+	if err == nil {
 		return collector
 	}
 
@@ -65,7 +65,7 @@ func (collector *Collector) Stack(err error, errType ErrType) *Collector {
 }
 
 func (collector *Collector) StackOut(err error, errType ErrType) *Collector {
-	if err != nil {
+	if err == nil {
 		return collector
 	}
 
