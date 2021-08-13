@@ -1,9 +1,9 @@
 package errnie
 
 import (
-	"fmt"
-
 	"container/ring"
+	"fmt"
+	"os"
 
 	"github.com/pterm/pterm"
 )
@@ -73,6 +73,16 @@ func (collector *Collector) StackOut(err error, errType ErrType) *Collector {
 	return collector.Stack(err, errType)
 }
 
+func (collector *Collector) StackDump(err error, errType ErrType) *Collector {
+	if err == nil {
+		return collector
+	}
+
+	collector.print(err, errType)
+	collector.Dump()
+	return collector.Stack(err, errType)
+}
+
 /*
 Dump the error stack. This prints our the raw Error object data and is
 not a method you want to use in any code that is not in debug mode.
@@ -84,6 +94,8 @@ func (collector Collector) Dump() {
 			fmt.Println(p.(Error))
 		}
 	})
+
+	os.Exit(1)
 }
 
 /*
