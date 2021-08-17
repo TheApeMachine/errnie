@@ -83,6 +83,18 @@ func (collector *Collector) StackDump(err error, errType ErrType) *Collector {
 	return collector.Stack(err, errType)
 }
 
+func (collector Collector) ToSlice() []string {
+	var out []string
+
+	collector.stack.Do(func(p interface{}) {
+		if p != nil {
+			out = append(out, (p.(Error).err.Error()))
+		}
+	})
+
+	return out
+}
+
 /*
 Dump the error stack. This prints our the raw Error object data and is
 not a method you want to use in any code that is not in debug mode.
