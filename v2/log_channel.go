@@ -19,6 +19,7 @@ and provides the basic local terminal output for log messages.
 type ConsoleLogger struct{}
 
 func NewConsoleLogger() LogChannel {
+	pterm.PrintDebugMessages = true
 	return ConsoleLogger{}
 }
 
