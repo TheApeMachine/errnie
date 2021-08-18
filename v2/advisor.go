@@ -36,22 +36,22 @@ type Advisor interface {
 }
 
 /*
-RookieAdvisor is the built in and most basic implementation of the concept.
+DefaultAdvisor is the built in and most basic implementation of the concept.
 */
-type RookieAdvisor struct {
+type DefaultAdvisor struct {
 }
 
 /*
 NewAdvisor... I'd hate to call it a factory, but it sure seems like one.
 */
-func NewAdvisor(advisorType *Advisor) *Advisor {
+func NewAdvisor(advisorType Advisor) Advisor {
 	return advisorType
 }
 
 /*
 Static is the entry point for the fast and loose method of determining state.
 */
-func (advisor *RookieAdvisor) Static(ringBuffer ring.Ring) bool {
+func (advisor DefaultAdvisor) Static(ringBuffer ring.Ring) bool {
 	yc := 0
 	nc := 0
 
@@ -71,11 +71,11 @@ Dynamic takes a bytes.Buffer channel so we can send it metadata. The call stack
 would be an idea for instance. Dynamic advice will also be twice as broad in
 value scope, which allows for additional complexity.
 */
-func (advisor *RookieAdvisor) Dynamic(<-chan bytes.Buffer) State {
+func (advisor DefaultAdvisor) Dynamic(<-chan bytes.Buffer) State {
 	return OK
 }
 
-func (advisor *RookieAdvisor) isInTypeList(list []ErrType, item ErrType) bool {
+func (advisor DefaultAdvisor) isInTypeList(list []ErrType, item ErrType) bool {
 	for k := range list {
 		if list[k] == item {
 			return true
