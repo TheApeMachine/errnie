@@ -1,4 +1,4 @@
-module github.com/theapemachine/errnie
+module github.com/theapemachine/errnie/v2
 
 go 1.16
 
