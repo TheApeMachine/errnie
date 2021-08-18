@@ -3,21 +3,19 @@ package errnie
 // ErrType defines an enumerable type.
 type ErrType uint
 
-// Define the enumeration for ErrType.
 const (
-	DEBUG ErrType = iota
-	INFO
-	WARNING
-	ERROR
-	CRITICAL
+	PANIC ErrType = iota
 	FATAL
-	PANIC
+	CRITICAL
+	ERROR
+	WARNING
+	INFO
+	DEBUG
 )
 
 /*
 Error wraps Go's built in error type to extend its functionality with a
-severity level. This starts to blur the lines between errors and logs,
-which is somewhat on purpose.
+severity level.
 */
 type Error struct {
 	err     error
@@ -25,10 +23,8 @@ type Error struct {
 }
 
 /*
-Error returns the canonical error value as given to us by Go's built in
-error type. It is mainly used to be able to have a return value that is
-compatible with idiomatic Go.
+ToString outputs the error message as it sits in the wrapperd Go error.
 */
-func (wrapper Error) Error() error {
-	return wrapper.err
+func (wrapper Error) ToString() string {
+	return wrapper.err.Error()
 }

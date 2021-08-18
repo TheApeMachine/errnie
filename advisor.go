@@ -44,18 +44,18 @@ type RookieAdvisor struct {
 /*
 NewAdvisor... I'd hate to call it a factory, but it sure seems like one.
 */
-func NewAdvisor(t Advisor) Advisor {
-	return t
+func NewAdvisor(advisorType *Advisor) *Advisor {
+	return advisorType
 }
 
 /*
 Static is the entry point for the fast and loose method of determining state.
 */
-func (advisor RookieAdvisor) Static(stack ring.Ring) bool {
+func (advisor RookieAdvisor) Static(ringBuffer ring.Ring) bool {
 	yc := 0
 	nc := 0
 
-	stack.Do(func(p interface{}) {
+	ringBuffer.Do(func(p interface{}) {
 		if advisor.isInTypeList([]ErrType{PANIC, FATAL, CRITICAL}, p.(Error).errType) {
 			nc++
 		} else {
