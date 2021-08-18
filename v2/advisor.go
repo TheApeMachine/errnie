@@ -51,7 +51,7 @@ func NewAdvisor(advisorType *Advisor) *Advisor {
 /*
 Static is the entry point for the fast and loose method of determining state.
 */
-func (advisor RookieAdvisor) Static(ringBuffer ring.Ring) bool {
+func (advisor *RookieAdvisor) Static(ringBuffer ring.Ring) bool {
 	yc := 0
 	nc := 0
 
@@ -71,11 +71,11 @@ Dynamic takes a bytes.Buffer channel so we can send it metadata. The call stack
 would be an idea for instance. Dynamic advice will also be twice as broad in
 value scope, which allows for additional complexity.
 */
-func (advisor RookieAdvisor) Dynamic(<-chan bytes.Buffer) State {
+func (advisor *RookieAdvisor) Dynamic(<-chan bytes.Buffer) State {
 	return OK
 }
 
-func (advisor RookieAdvisor) isInTypeList(list []ErrType, item ErrType) bool {
+func (advisor *RookieAdvisor) isInTypeList(list []ErrType, item ErrType) bool {
 	for k := range list {
 		if list[k] == item {
 			return true

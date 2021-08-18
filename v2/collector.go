@@ -41,7 +41,7 @@ func (collector *Collector) Add(err error, errType ErrType) {
 /*
 Dump returns all the errors currently present in the ring buffer.
 */
-func (collector Collector) Dump() []Error {
+func (collector *Collector) Dump() []Error {
 	var errors []Error
 
 	collector.ringBuffer.Do(func(err interface{}) {
