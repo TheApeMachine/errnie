@@ -1,5 +1,7 @@
 package errnie
 
+import "github.com/pterm/pterm"
+
 /*
 Logger is a custom logger which allows a consistent interface to
 multiple output channels.
@@ -9,6 +11,8 @@ type Logger struct {
 }
 
 func NewLogger(channels ...LogChannel) *Logger {
+	pterm.PrintDebugMessages = true
+
 	return &Logger{
 		channels: channels,
 	}
