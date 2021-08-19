@@ -26,7 +26,7 @@ Add an error to the Collector's ring buffer.
 func (collector *Collector) Add(err error, errType ErrType) *Collector {
 	// Ignore nil errors.
 	if err == nil {
-		return
+		return collector
 	}
 
 	collector.ringBuffer.Value = Error{
