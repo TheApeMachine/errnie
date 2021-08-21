@@ -23,8 +23,8 @@ const (
 
 type Context interface {
 	initialize(string) Context
-	Handle(ErrType, ...error)
-	Add(ErrType, ...error)
+	Handle(ErrType, ...interface{})
+	Add(ErrType, ...interface{})
 	Log(ErrType, ...interface{})
 	Context() context.Context
 	Cancel()
@@ -74,25 +74,18 @@ func (ambient AmbientContext) initialize(namespace string) Context {
 	return ambient
 }
 
-func (ambient AmbientContext) Handle(errType ErrType, errs ...error) {
+func (ambient AmbientContext) Handle(errType ErrType, errs ...interface{}) {
 	ambient.Add(errType, errs...)
-
-	for _, err := range errs {
-		ambient.Log(errType, err.Error())
-	}
+	ambient.Log(errType, errs...)
 }
 
-func (ambient AmbientContext) Add(errType ErrType, errs ...error) {
+func (ambient AmbientContext) Add(errType ErrType, errs ...interface{}) {
 	for _, err := range errs {
-		ambient.errs.Add(err, errType)
+		ambient.errs.Add(err.(error), errType)
 	}
 }
 
 func (ambient AmbientContext) Log(errType ErrType, msgs ...interface{}) {
-	if msgs == nil {
-		return
-	}
-
 	ambient.logs.Send(errType, msgs...)
 }
 
