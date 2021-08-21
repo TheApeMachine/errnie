@@ -22,19 +22,19 @@ func (logger *Logger) Send(logLevel ErrType, msgs ...interface{}) {
 	for _, channel := range logger.channels {
 		switch logLevel {
 		case PANIC:
-			channel.Panic(msgs)
+			channel.Panic(msgs...)
 		case FATAL:
-			channel.Fatal(msgs)
+			channel.Fatal(msgs...)
 		case CRITICAL:
-			channel.Critical(msgs)
+			channel.Critical(msgs...)
 		case ERROR:
-			channel.Error(msgs)
+			channel.Error(msgs...)
 		case WARNING:
-			channel.Warning(msgs)
+			channel.Warning(msgs...)
 		case INFO:
-			channel.Info(msgs)
+			channel.Info(msgs...)
 		case DEBUG:
-			channel.Debug(msgs)
+			channel.Debug(msgs...)
 		}
 	}
 }

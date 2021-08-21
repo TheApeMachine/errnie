@@ -22,10 +22,10 @@ func NewConsoleLogger() LogChannel {
 	return ConsoleLogger{}
 }
 
-func (logChannel ConsoleLogger) Panic(msgs ...interface{})    { pterm.Fatal.Println(msgs) }
-func (logChannel ConsoleLogger) Fatal(msgs ...interface{})    { pterm.Fatal.Println(msgs) }
-func (logChannel ConsoleLogger) Critical(msgs ...interface{}) { pterm.Error.Println(msgs) }
-func (logChannel ConsoleLogger) Error(msgs ...interface{})    { pterm.Error.Println(msgs) }
-func (logChannel ConsoleLogger) Info(msgs ...interface{})     { pterm.Info.Println(msgs) }
-func (logChannel ConsoleLogger) Warning(msgs ...interface{})  { pterm.Warning.Println(msgs) }
-func (logChannel ConsoleLogger) Debug(msgs ...interface{})    { pterm.Debug.Println(msgs) }
+func (logChannel ConsoleLogger) Panic(msgs ...interface{})    { pterm.Fatal.Println(msgs...) }
+func (logChannel ConsoleLogger) Fatal(msgs ...interface{})    { pterm.Fatal.Println(msgs...) }
+func (logChannel ConsoleLogger) Critical(msgs ...interface{}) { pterm.Error.Println(msgs...) }
+func (logChannel ConsoleLogger) Error(msgs ...interface{})    { pterm.Error.Println(msgs...) }
+func (logChannel ConsoleLogger) Info(msgs ...interface{})     { pterm.Info.Println(msgs...) }
+func (logChannel ConsoleLogger) Warning(msgs ...interface{})  { pterm.Warning.Println(msgs...) }
+func (logChannel ConsoleLogger) Debug(msgs ...interface{})    { pterm.Debug.Println(msgs...) }
