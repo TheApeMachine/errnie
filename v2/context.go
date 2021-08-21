@@ -89,7 +89,11 @@ func (ambient AmbientContext) Add(errType ErrType, errs ...error) {
 }
 
 func (ambient AmbientContext) Log(errType ErrType, msgs ...interface{}) {
-	ambient.logs.Send(errType, msgs)
+	if msgs == nil {
+		return
+	}
+
+	ambient.logs.Send(errType, msgs...)
 }
 
 func (ambient AmbientContext) Context() context.Context {
