@@ -81,6 +81,9 @@ func (ambient AmbientContext) Handle(errType ErrType, errs ...interface{}) {
 
 func (ambient AmbientContext) Add(errType ErrType, errs ...interface{}) {
 	for _, err := range errs {
+		if err == nil {
+			continue
+		}
 		ambient.errs.Add(err.(error), errType)
 	}
 }
