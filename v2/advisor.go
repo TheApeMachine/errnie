@@ -3,6 +3,8 @@ package errnie
 import (
 	"bytes"
 	"container/ring"
+
+	"github.com/spf13/viper"
 )
 
 /*
@@ -18,20 +20,20 @@ const (
 	DEAD
 )
 
+type Sampler struct {
+	frequency int
+	cycles    *ring.Ring
+}
+
 /*
 Advisor describes an interface that contains two methods of analyzing a
-buffer of error values.
-Static analysis is a fast and simple way to make a determination of what in
-most cases could be fairly described as a "count".
-Dynamic analysis is a method that takes in a channel where it feeds on
-additional metadata to get a more refined view of program state.
-It takes a bytes.Buffer to keep things "generic" so just be sure what you are
-sending it and hard cast to it, or be a barbarian and use reflection.
-Remember the calling function right before the advisor though, and that you are
-basically always looking for a boolean answer to "Are we OK()?".
+buffer of error values. It provides an abstraction layer over a complicated
+error state in a system.
 */
 type Advisor interface {
-	Static(ring.Ring) bool
+	initialize(Sampler) Advisor
+
+	Static(*ring.Ring) bool
 	Dynamic(<-chan bytes.Buffer) State
 }
 
@@ -39,19 +41,31 @@ type Advisor interface {
 DefaultAdvisor is the built in and most basic implementation of the concept.
 */
 type DefaultAdvisor struct {
+	sampler struct {
+		frequency int
+		cycles    *ring.Ring
+	}
 }
 
 /*
 NewAdvisor... I'd hate to call it a factory, but it sure seems like one.
 */
 func NewAdvisor(advisorType Advisor) Advisor {
-	return advisorType
+	return advisorType.initialize(Sampler{
+		frequency: viper.GetInt("errnie.advisors.default.frequency"),
+		cycles:    ring.New(viper.GetInt("errnie.advisors.default.cycles")),
+	})
+}
+
+func (advisor DefaultAdvisor) initialize(sampler Sampler) Advisor {
+	advisor.sampler = sampler
+	return advisor
 }
 
 /*
 Static is the entry point for the fast and loose method of determining state.
 */
-func (advisor DefaultAdvisor) Static(ringBuffer ring.Ring) bool {
+func (advisor DefaultAdvisor) Static(ringBuffer *ring.Ring) bool {
 	yc := 0
 	nc := 0
 
@@ -69,7 +83,7 @@ func (advisor DefaultAdvisor) Static(ringBuffer ring.Ring) bool {
 /*
 Dynamic takes a bytes.Buffer channel so we can send it metadata. The call stack
 would be an idea for instance. Dynamic advice will also be twice as broad in
-value scope, which allows for additional complexity.
+value scope.
 */
 func (advisor DefaultAdvisor) Dynamic(<-chan bytes.Buffer) State {
 	return OK
