@@ -23,7 +23,7 @@ func NewConsoleLogger() LogChannel {
 }
 
 func (logChannel ConsoleLogger) Panic(msgs ...interface{}) {
-	if len(msgs) == 0 {
+	if len(msgs) == 0 || msgs[0] == nil {
 		return
 	}
 
@@ -31,7 +31,7 @@ func (logChannel ConsoleLogger) Panic(msgs ...interface{}) {
 }
 
 func (logChannel ConsoleLogger) Fatal(msgs ...interface{}) {
-	if len(msgs) == 0 {
+	if len(msgs) == 0 || msgs[0] == nil {
 		return
 	}
 
@@ -39,7 +39,7 @@ func (logChannel ConsoleLogger) Fatal(msgs ...interface{}) {
 }
 
 func (logChannel ConsoleLogger) Critical(msgs ...interface{}) {
-	if len(msgs) == 0 {
+	if len(msgs) == 0 || msgs[0] == nil {
 		return
 	}
 
@@ -47,7 +47,7 @@ func (logChannel ConsoleLogger) Critical(msgs ...interface{}) {
 }
 
 func (logChannel ConsoleLogger) Error(msgs ...interface{}) {
-	if len(msgs) == 0 {
+	if len(msgs) == 0 || msgs[0] == nil {
 		return
 	}
 
@@ -55,14 +55,14 @@ func (logChannel ConsoleLogger) Error(msgs ...interface{}) {
 }
 
 func (logChannel ConsoleLogger) Info(msgs ...interface{}) {
-	if len(msgs) == 0 {
+	if len(msgs) == 0 || msgs[0] == nil {
 		return
 	}
 
 	pterm.Info.Println(msgs...)
 }
 func (logChannel ConsoleLogger) Warning(msgs ...interface{}) {
-	if len(msgs) == 0 {
+	if len(msgs) == 0 || msgs[0] == nil {
 		return
 	}
 
@@ -70,7 +70,7 @@ func (logChannel ConsoleLogger) Warning(msgs ...interface{}) {
 }
 
 func (logChannel ConsoleLogger) Debug(msgs ...interface{}) {
-	if len(msgs) == 0 {
+	if len(msgs) == 0 || msgs[0] == nil {
 		return
 	}
 
