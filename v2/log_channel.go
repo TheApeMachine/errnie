@@ -3,13 +3,13 @@ package errnie
 import "github.com/pterm/pterm"
 
 type LogChannel interface {
-	Panic(msgs ...interface{})
-	Fatal(msgs ...interface{})
-	Critical(msgs ...interface{})
-	Error(msgs ...interface{})
-	Info(msgs ...interface{})
-	Warning(msgs ...interface{})
-	Debug(msgs ...interface{})
+	Panic(msgs ...interface{}) bool
+	Fatal(msgs ...interface{}) bool
+	Critical(msgs ...interface{}) bool
+	Error(msgs ...interface{}) bool
+	Info(msgs ...interface{}) bool
+	Warning(msgs ...interface{}) bool
+	Debug(msgs ...interface{}) bool
 }
 
 /*
@@ -22,57 +22,64 @@ func NewConsoleLogger() LogChannel {
 	return ConsoleLogger{}
 }
 
-func (logChannel ConsoleLogger) Panic(msgs ...interface{}) {
+func (logChannel ConsoleLogger) Panic(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return
+		return false
 	}
 
 	pterm.Fatal.Println(msgs...)
+	return true
 }
 
-func (logChannel ConsoleLogger) Fatal(msgs ...interface{}) {
+func (logChannel ConsoleLogger) Fatal(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return
+		return false
 	}
 
 	pterm.Fatal.Println(msgs...)
+	return true
 }
 
-func (logChannel ConsoleLogger) Critical(msgs ...interface{}) {
+func (logChannel ConsoleLogger) Critical(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return
+		return false
 	}
 
 	pterm.Error.Println(msgs...)
+	return true
 }
 
-func (logChannel ConsoleLogger) Error(msgs ...interface{}) {
+func (logChannel ConsoleLogger) Error(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return
+		return false
 	}
 
 	pterm.Error.Println(msgs...)
+	return true
 }
 
-func (logChannel ConsoleLogger) Info(msgs ...interface{}) {
+func (logChannel ConsoleLogger) Info(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return
+		return false
 	}
 
 	pterm.Info.Println(msgs...)
+	return true
 }
-func (logChannel ConsoleLogger) Warning(msgs ...interface{}) {
+func (logChannel ConsoleLogger) Warning(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return
+		return false
 	}
 
 	pterm.Warning.Println(msgs...)
+	return true
 }
 
-func (logChannel ConsoleLogger) Debug(msgs ...interface{}) {
+func (logChannel ConsoleLogger) Debug(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return
+		return false
 	}
 
 	pterm.Debug.Println(msgs...)
+	return true
 }

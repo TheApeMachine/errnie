@@ -18,23 +18,25 @@ func NewLogger(channels ...LogChannel) *Logger {
 	}
 }
 
-func (logger *Logger) Send(logLevel ErrType, msgs ...interface{}) {
+func (logger *Logger) Send(logLevel ErrType, msgs ...interface{}) bool {
 	for _, channel := range logger.channels {
 		switch logLevel {
 		case PANIC:
-			channel.Panic(msgs...)
+			return channel.Panic(msgs...)
 		case FATAL:
-			channel.Fatal(msgs...)
+			return channel.Fatal(msgs...)
 		case CRITICAL:
-			channel.Critical(msgs...)
+			return channel.Critical(msgs...)
 		case ERROR:
-			channel.Error(msgs...)
+			return channel.Error(msgs...)
 		case WARNING:
-			channel.Warning(msgs...)
+			return channel.Warning(msgs...)
 		case INFO:
-			channel.Info(msgs...)
+			return channel.Info(msgs...)
 		case DEBUG:
-			channel.Debug(msgs...)
+			return channel.Debug(msgs...)
 		}
 	}
+
+	return false
 }

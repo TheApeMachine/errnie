@@ -23,10 +23,10 @@ func NewCollector(ringSize int) *Collector {
 /*
 Add an error to the Collector's ring buffer.
 */
-func (collector *Collector) Add(err error, errType ErrType) *Collector {
+func (collector *Collector) Add(err error, errType ErrType) bool {
 	// Ignore nil errors.
 	if err == nil {
-		return collector
+		return false
 	}
 
 	collector.ringBuffer.Value = Error{
@@ -37,7 +37,7 @@ func (collector *Collector) Add(err error, errType ErrType) *Collector {
 	// Turn the ring buffer one unit, ready for the next error.
 	collector.ringBuffer.Next()
 
-	return collector
+	return true
 }
 
 /*

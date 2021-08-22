@@ -23,9 +23,9 @@ const (
 
 type Context interface {
 	initialize(string) Context
-	Handle(ErrType, ...interface{})
-	Add(ErrType, ...interface{})
-	Log(ErrType, ...interface{})
+	Handle(ErrType, ...interface{}) bool
+	Add(ErrType, ...interface{}) bool
+	Log(ErrType, ...interface{}) bool
 	Context() context.Context
 	Cancel()
 	Timeout()
@@ -74,22 +74,24 @@ func (ambient AmbientContext) initialize(namespace string) Context {
 	return ambient
 }
 
-func (ambient AmbientContext) Handle(errType ErrType, errs ...interface{}) {
+func (ambient AmbientContext) Handle(errType ErrType, errs ...interface{}) bool {
 	ambient.Add(errType, errs...)
-	ambient.Log(errType, errs...)
+	return ambient.Log(errType, errs...)
 }
 
-func (ambient AmbientContext) Add(errType ErrType, errs ...interface{}) {
+func (ambient AmbientContext) Add(errType ErrType, errs ...interface{}) bool {
 	for _, err := range errs {
 		if err == nil {
 			continue
 		}
-		ambient.errs.Add(err.(error), errType)
+		return ambient.errs.Add(err.(error), errType)
 	}
+
+	return false
 }
 
-func (ambient AmbientContext) Log(errType ErrType, msgs ...interface{}) {
-	ambient.logs.Send(errType, msgs...)
+func (ambient AmbientContext) Log(errType ErrType, msgs ...interface{}) bool {
+	return ambient.logs.Send(errType, msgs...)
 }
 
 func (ambient AmbientContext) Context() context.Context {
