@@ -1,6 +1,9 @@
 package errnie
 
-import "github.com/pterm/pterm"
+import (
+	"github.com/pterm/pterm"
+	"github.com/spf13/viper"
+)
 
 type LogChannel interface {
 	Panic(msgs ...interface{}) bool
@@ -76,7 +79,7 @@ func (logChannel ConsoleLogger) Warning(msgs ...interface{}) bool {
 }
 
 func (logChannel ConsoleLogger) Debug(msgs ...interface{}) bool {
-	if len(msgs) == 0 || msgs[0] == nil {
+	if len(msgs) == 0 || msgs[0] == nil || !viper.GetBool("debug") {
 		return false
 	}
 

@@ -11,97 +11,64 @@ import (
 type ContextType uint
 
 const (
-	DEFAULT ContextType = iota
-)
-
-type CancelType uint
-
-const (
-	CANCEL CancelType = iota
+	TODO ContextType = iota
+	BACKGROUND
+	CANCEL
 	TIMEOUT
+	DEADLINE
 )
 
-type Context interface {
-	initialize(string) Context
-	Handle(ErrType, ...interface{}) bool
-	Add(ErrType, ...interface{}) bool
-	Log(ErrType, ...interface{}) bool
-	Context() context.Context
-	Cancel()
-	Timeout()
-}
-
-var ambient Context
+var ambient AmbientContext
 
 func init() {
-	ambient = NewContext(AmbientContext{}, "default")
+	ambient = NewContext(AmbientContext{}, "")
 }
 
-func NewContext(contextType Context, namespace string) Context {
+func NewContext(contextType AmbientContext, namespace string) AmbientContext {
 	return contextType.initialize(namespace)
 }
 
 type AmbientContext struct {
 	ID   uuid.UUID
+	TS   int64
 	nmsp string
-	ctxs []context.Context
-	cnls map[CancelType]context.CancelFunc
+	ctxs map[uuid.UUID]map[ContextType]context.Context
+	cnls map[uuid.UUID]map[ContextType]context.CancelFunc
 	errs *Collector
 	logs *Logger
 }
 
-func Ambient() Context {
+func Ambient() AmbientContext {
 	return ambient
 }
 
-func (ambient AmbientContext) initialize(namespace string) Context {
+func (ambient AmbientContext) initialize(namespace string) AmbientContext {
 	ambient.ID = uuid.New()
-	ambient.cnls = make(map[CancelType]context.CancelFunc)
-
-	timeout := viper.GetDuration("errnie.contexts.default.timeout")
-
-	ctx := context.Background()
-	ctx, cf := context.WithCancel(ctx)
-	ctx, to := context.WithTimeout(ctx, timeout*time.Second)
-
+	ambient.TS = time.Now().UnixNano()
 	ambient.nmsp = namespace
-	ambient.ctxs = append(ambient.ctxs, ctx)
-	ambient.cnls[CANCEL] = cf
-	ambient.cnls[TIMEOUT] = to
 	ambient.errs = NewCollector(viper.GetInt("errnie.collectors.default.buffer"))
 	ambient.logs = NewLogger(&ConsoleLogger{})
 
 	return ambient
 }
 
-func (ambient AmbientContext) Handle(errType ErrType, errs ...interface{}) bool {
+/*
+Handle takes an error type, an arbitrary but basic handler functor, and a splat of errors.
+The functor may be nil, it will simply do nothing but add the errors to the collector and logging.
+*/
+func (ambient AmbientContext) Handle(errType ErrType, handler func(), errs ...interface{}) bool {
+	if handler != nil {
+		defer handler()
+	}
+
 	ambient.Add(errType, errs...)
 	return ambient.Log(errType, errs...)
 }
 
 func (ambient AmbientContext) Add(errType ErrType, errs ...interface{}) bool {
-	for _, err := range errs {
-		if err == nil {
-			continue
-		}
-		return ambient.errs.Add(err.(error), errType)
-	}
-
-	return false
+	return ambient.errs.Add(errs, errType)
 }
 
 func (ambient AmbientContext) Log(errType ErrType, msgs ...interface{}) bool {
 	return ambient.logs.Send(errType, msgs...)
-}
-
-func (ambient AmbientContext) Context() context.Context {
-	return ambient.ctxs[DEFAULT]
-}
-
-func (ambient AmbientContext) Cancel() {
-	ambient.cnls[CANCEL]()
-}
-
-func (ambient AmbientContext) Timeout() {
-	ambient.cnls[TIMEOUT]()
 }

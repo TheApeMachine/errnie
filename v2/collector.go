@@ -12,7 +12,7 @@ type Collector struct {
 }
 
 /*
-New acts as a constructor and returns an reference pointer.
+NewCollector sets up the ring buffer we will collect our errors in.
 */
 func NewCollector(ringSize int) *Collector {
 	return &Collector{
@@ -21,36 +21,32 @@ func NewCollector(ringSize int) *Collector {
 }
 
 /*
-Add an error to the Collector's ring buffer.
+Add an error to the Collector's ring buffer and report OK if no errors.
 */
-func (collector *Collector) Add(err error, errType ErrType) bool {
-	// Ignore nil errors.
-	if err == nil {
-		return false
+func (collector *Collector) Add(errs []interface{}, errType ErrType) bool {
+	real := getRealErrors(errs)
+
+	for _, err := range real {
+		collector.ringBuffer.Next().Value = Error{
+			err:     err,
+			errType: errType,
+		}
 	}
 
-	collector.ringBuffer.Value = Error{
-		err:     err,
-		errType: errType,
-	}
-
-	// Turn the ring buffer one unit, ready for the next error.
-	collector.ringBuffer.Next()
-
-	return true
+	return len(real) == 0
 }
 
 /*
 Dump returns all the errors currently present in the ring buffer.
 */
 func (collector *Collector) Dump() []Error {
-	var errors []Error
+	var errs []Error
 
 	collector.ringBuffer.Do(func(err interface{}) {
 		if err != nil {
-			errors = append(errors, err.(Error))
+			errs = append(errs, err.(Error))
 		}
 	})
 
-	return errors
+	return errs
 }

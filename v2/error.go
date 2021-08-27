@@ -28,3 +28,17 @@ ToString outputs the error message as it sits in the wrapperd Go error.
 func (wrapper Error) ToString() string {
 	return wrapper.err.Error()
 }
+
+func getRealErrors(errs []interface{}) []error {
+	var real []error
+
+	for _, err := range errs {
+		if err == nil {
+			continue
+		}
+
+		real = append(real, err.(error))
+	}
+
+	return real
+}
