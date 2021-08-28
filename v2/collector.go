@@ -24,6 +24,8 @@ func NewCollector(ringSize int) *Collector {
 Add an error to the Collector's ring buffer and report OK if no errors.
 */
 func (collector *Collector) Add(errs []interface{}, errType ErrType) bool {
+	ambient.Log(DEBUG, "errnie.Collector.Add <-", errs, errType)
+
 	real := getRealErrors(errs)
 
 	for _, err := range real {
@@ -33,13 +35,14 @@ func (collector *Collector) Add(errs []interface{}, errType ErrType) bool {
 		}
 	}
 
-	return len(real) == 0
+	return len(real) != 0
 }
 
 /*
 Dump returns all the errors currently present in the ring buffer.
 */
 func (collector *Collector) Dump() []Error {
+	ambient.Log(DEBUG, "errnie.Collector.Dump")
 	var errs []Error
 
 	collector.ringBuffer.Do(func(err interface{}) {

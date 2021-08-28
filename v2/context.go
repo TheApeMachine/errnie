@@ -44,6 +44,8 @@ func Ambient() AmbientContext {
 }
 
 func (ambient AmbientContext) initialize(namespace string) AmbientContext {
+	ambient.Log(DEBUG, "errnie.AmbientContext.initialize <-", namespace)
+
 	ambient.ID = uuid.New()
 	ambient.TS = time.Now().UnixNano()
 	ambient.nmsp = namespace
@@ -60,16 +62,19 @@ The functor may be nil, it will simply do nothing but add the errors to the coll
 func (ambient AmbientContext) Handle(
 	errType ErrType, handler func(interface{}), arg interface{}, errs ...interface{},
 ) bool {
-	if handler != nil {
-		defer handler(arg)
+	ambient.Log(DEBUG, "errnie.AmbientContext.Handle <-", errType, handler, arg, errs)
+
+	var bad bool
+
+	if bad = ambient.Add(errType, errs...) && ambient.Log(errType, errs...); bad {
+		if handler != nil {
+			handler(arg)
+		}
+
+		return bad
 	}
 
-	var ok bool
-	if ok = ambient.Add(errType, errs...) && ambient.Log(errType, errs...); !ok {
-		return ok
-	}
-
-	return ok
+	return bad
 }
 
 func (ambient AmbientContext) Add(errType ErrType, errs ...interface{}) bool {
