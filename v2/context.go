@@ -44,8 +44,6 @@ func Ambient() AmbientContext {
 }
 
 func (ambient AmbientContext) initialize(namespace string) AmbientContext {
-	ambient.Log(DEBUG, "errnie.AmbientContext.initialize <-", namespace)
-
 	ambient.ID = uuid.New()
 	ambient.TS = time.Now().UnixNano()
 	ambient.nmsp = namespace
