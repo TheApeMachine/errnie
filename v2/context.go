@@ -22,7 +22,7 @@ var ambient AmbientContext
 
 func init() {
 	ambient = NewContext(AmbientContext{}, "")
-	ambient.Log(DEBUG, "errnie running as ambient context")
+	ambient.Log(INFO, "errnie running as ambient context")
 }
 
 func NewContext(contextType AmbientContext, namespace string) AmbientContext {
@@ -30,13 +30,14 @@ func NewContext(contextType AmbientContext, namespace string) AmbientContext {
 }
 
 type AmbientContext struct {
-	ID   uuid.UUID
-	TS   int64
-	nmsp string
-	ctxs map[uuid.UUID][]context.Context
-	cnls map[uuid.UUID][]context.CancelFunc
-	errs *Collector
-	logs *Logger
+	ID    uuid.UUID
+	TS    int64
+	nmsp  string
+	ctxs  map[uuid.UUID][]context.Context
+	cnls  map[uuid.UUID][]context.CancelFunc
+	errs  *Collector
+	logs  *Logger
+	trace *Tracer
 }
 
 func Ambient() AmbientContext {
@@ -49,6 +50,7 @@ func (ambient AmbientContext) initialize(namespace string) AmbientContext {
 	ambient.nmsp = namespace
 	ambient.errs = NewCollector(viper.GetInt("errnie.collectors.default.buffer"))
 	ambient.logs = NewLogger(&ConsoleLogger{})
+	ambient.trace = NewTracer(true)
 
 	return ambient
 }
