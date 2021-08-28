@@ -14,22 +14,15 @@ const (
 	CTX
 )
 
-func Kill(handlerType HandlerType) (func(interface{}), interface{}) {
+func Kill(handlerType HandlerType) func(interface{}) {
 	switch handlerType {
 	case EXIT:
-		return exit, 1
-	}
-
-	return noop, nil
-}
-
-func Cancel(handlerType HandlerType, id uuid.UUID) (func(interface{}), interface{}) {
-	switch handlerType {
+		return exit
 	case CTX:
-		return ctx, id
+		return ctx
 	}
 
-	return noop, nil
+	return noop
 }
 
 func noop(null interface{}) {}
