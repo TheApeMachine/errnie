@@ -58,9 +58,7 @@ Handle takes an error type, an arbitrary but basic handler functor, and a splat 
 The functor may be nil, it will simply do nothing but add the errors to the collector and logging.
 */
 func (ambient AmbientContext) Handle(
-	errType ErrType,
-	handler func(interface{}) interface{}, arg interface{},
-	errs ...interface{},
+	errType ErrType, handler func(interface{}), arg interface{}, errs ...interface{},
 ) bool {
 	if handler != nil {
 		defer handler(arg)

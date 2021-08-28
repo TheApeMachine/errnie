@@ -17,7 +17,11 @@ func (ambient AmbientContext) Cancel(UUID uuid.UUID) {
 	}
 }
 
-func (ambient AmbientContext) Set(bg, cn, to, dl bool) (context.Context, uuid.UUID) {
+func (ambient AmbientContext) Get(UUID uuid.UUID) ([]context.Context, []context.CancelFunc) {
+	return ambient.ctxs[UUID], ambient.cnls[UUID]
+}
+
+func (ambient AmbientContext) Set(bg, cn, to, dl bool) uuid.UUID {
 	var ctx context.Context
 	var cnl context.CancelFunc
 	var cnls []context.CancelFunc
@@ -47,5 +51,5 @@ func (ambient AmbientContext) Set(bg, cn, to, dl bool) (context.Context, uuid.UU
 	ambient.ctxs[uuid] = append(ambient.ctxs[uuid], ctx)
 	ambient.cnls[uuid] = cnls
 
-	return ctx, uuid
+	return uuid
 }
