@@ -8,19 +8,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-func (ambient AmbientContext) Get(UUID uuid.UUID) (
-	map[ContextType]context.Context, map[ContextType]context.CancelFunc,
-) {
-	if ctx := ambient.ctxs[UUID]; len(ctx) == 0 {
-		return nil, nil
-	}
+func (ambient AmbientContext) Cancel(UUID uuid.UUID) {
+	defer delete(ambient.ctxs, UUID)
+	defer delete(ambient.cnls, UUID)
 
-	return ambient.ctxs[UUID], ambient.cnls[UUID]
+	for _, cnl := range ambient.cnls[UUID] {
+		cnl()
+	}
 }
 
-func (ambient AmbientContext) Set(
-	UUID uuid.UUID, bg, cn, to, dl bool,
-) (context.Context, []context.CancelFunc) {
+func (ambient AmbientContext) Set(bg, cn, to, dl bool) (context.Context, uuid.UUID) {
 	var ctx context.Context
 	var cnl context.CancelFunc
 	var cnls []context.CancelFunc
@@ -46,5 +43,9 @@ func (ambient AmbientContext) Set(
 		cnls = append(cnls, cnl)
 	}
 
-	return ctx, cnls
+	uuid := uuid.New()
+	ambient.ctxs[uuid] = append(ambient.ctxs[uuid], ctx)
+	ambient.cnls[uuid] = cnls
+
+	return ctx, uuid
 }

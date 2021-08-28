@@ -22,6 +22,7 @@ var ambient AmbientContext
 
 func init() {
 	ambient = NewContext(AmbientContext{}, "")
+	ambient.Log(DEBUG, "errnie running as ambient context")
 }
 
 func NewContext(contextType AmbientContext, namespace string) AmbientContext {
@@ -32,8 +33,8 @@ type AmbientContext struct {
 	ID   uuid.UUID
 	TS   int64
 	nmsp string
-	ctxs map[uuid.UUID]map[ContextType]context.Context
-	cnls map[uuid.UUID]map[ContextType]context.CancelFunc
+	ctxs map[uuid.UUID][]context.Context
+	cnls map[uuid.UUID][]context.CancelFunc
 	errs *Collector
 	logs *Logger
 }
@@ -56,9 +57,11 @@ func (ambient AmbientContext) initialize(namespace string) AmbientContext {
 Handle takes an error type, an arbitrary but basic handler functor, and a splat of errors.
 The functor may be nil, it will simply do nothing but add the errors to the collector and logging.
 */
-func (ambient AmbientContext) Handle(errType ErrType, handler func(), errs ...interface{}) bool {
+func (ambient AmbientContext) Handle(
+	errType ErrType, handler func(interface{}), arg interface{}, errs ...interface{},
+) bool {
 	if handler != nil {
-		defer handler()
+		defer handler(arg)
 	}
 
 	ambient.Add(errType, errs...)
