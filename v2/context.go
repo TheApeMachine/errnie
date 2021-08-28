@@ -64,8 +64,12 @@ func (ambient AmbientContext) Handle(
 		defer handler(arg)
 	}
 
-	ambient.Add(errType, errs...)
-	return ambient.Log(errType, errs...)
+	var ok bool
+	if ok = ambient.Add(errType, errs...) && ambient.Log(errType, errs...); !ok {
+		return ok
+	}
+
+	return ok
 }
 
 func (ambient AmbientContext) Add(errType ErrType, errs ...interface{}) bool {
