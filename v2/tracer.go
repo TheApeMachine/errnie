@@ -26,13 +26,13 @@ func (tracer Tracer) Caller(prefix, suffix string) {
 }
 
 func (ambient AmbientContext) Trace() {
-	ambient.trace.Caller("\xF0\x9F\x99\x88", "")
+	ambient.trace.Caller("\xF0\x9F\x94\x99", "")
 }
 
 func (ambient AmbientContext) TraceIn() {
-	ambient.trace.Caller("\xF0\x9F\x99\x89", "")
+	ambient.trace.Caller("\xF0\x9F\x94\x99", "")
 }
 
 func (ambient AmbientContext) TraceOut() {
-	ambient.trace.Caller("\xF0\x9F\x99\x8A", "")
+	ambient.trace.Caller("\xF0\x9F\x94\x99", "")
 }
