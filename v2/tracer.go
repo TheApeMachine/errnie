@@ -25,6 +25,14 @@ func (tracer Tracer) Caller(prefix, suffix string) {
 	ambient.Log(DEBUG, prefix, frame.File, frame.Line, frame.Function, suffix)
 }
 
-func (ambient AmbientContext) Trace(prefix, suffix string) {
-	ambient.trace.Caller(prefix, suffix)
+func (ambient AmbientContext) Trace() {
+	ambient.trace.Caller("\xF0\x9F\x99\x88", "")
+}
+
+func (ambient AmbientContext) TraceIn() {
+	ambient.trace.Caller("\xF0\x9F\x99\x89", "")
+}
+
+func (ambient AmbientContext) TraceOut() {
+	ambient.trace.Caller("\xF0\x9F\x99\x8A", "")
 }
