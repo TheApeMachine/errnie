@@ -32,6 +32,10 @@ func (wrapper Error) ToString() string {
 func getRealErrors(errs []interface{}) []error {
 	var real []error
 
+	if len(errs) == 0 {
+		return real
+	}
+
 	for _, err := range errs {
 		if err == nil {
 			continue
