@@ -1,9 +1,7 @@
 package errnie
 
 import (
-	"fmt"
 	"runtime"
-	"runtime/debug"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -14,12 +12,6 @@ type Tracer struct {
 }
 
 func NewTracer(on bool) *Tracer {
-	go func() {
-		for {
-			fmt.Println(">", string(debug.Stack()))
-		}
-	}()
-
 	return &Tracer{on: on}
 }
 
