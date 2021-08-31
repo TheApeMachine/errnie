@@ -26,62 +26,62 @@ func NewConsoleLogger() LogChannel {
 
 func (logChannel ConsoleLogger) Panic(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return false
+		return true
 	}
 
 	pterm.Fatal.Println(msgs...)
-	return true
+	return false
 }
 
 func (logChannel ConsoleLogger) Fatal(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return false
+		return true
 	}
 
 	pterm.Fatal.Println(msgs...)
-	return true
+	return false
 }
 
 func (logChannel ConsoleLogger) Critical(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return false
+		return true
 	}
 
 	pterm.Error.Println(msgs...)
-	return true
+	return false
 }
 
 func (logChannel ConsoleLogger) Error(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return false
+		return true
 	}
 
 	pterm.Error.Println(msgs...)
-	return true
+	return false
 }
 
 func (logChannel ConsoleLogger) Info(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return false
+		return true
 	}
 
 	pterm.Info.Println(msgs...)
-	return true
+	return false
 }
 func (logChannel ConsoleLogger) Warning(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return false
+		return true
 	}
 
 	pterm.Warning.Println(msgs...)
-	return true
+	return false
 }
 
 func (logChannel ConsoleLogger) Debug(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
-		return false
+		return true
 	}
 
 	pterm.Debug.Println(msgs...)
-	return true
+	return false
 }

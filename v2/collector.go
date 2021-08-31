@@ -24,29 +24,38 @@ func NewCollector(ringSize int) *Collector {
 Add an error to the Collector's ring buffer and report OK if no errors.
 */
 func (collector *Collector) Add(errs []interface{}, errType ErrType) bool {
+	ambient.trace.Caller("\xF0\x9F\x90\x9E", errs, errType)
 	real := getRealErrors(errs)
 
 	for _, err := range real {
-		collector.ringBuffer.Next().Value = Error{
-			err:     err,
-			errType: errType,
+		collector.ringBuffer.Value = Error{
+			Err:     err,
+			ErrType: errType,
 		}
+
+		collector.ringBuffer.Next()
 	}
 
-	return len(real) != 0
+	return len(real) == 0
 }
 
 /*
 Dump returns all the errors currently present in the ring buffer.
 */
-func (collector *Collector) Dump() []Error {
-	var errs []Error
+func (collector *Collector) Dump() chan Error {
+	ambient.trace.Caller("\xF0\x9F\x90\x9E")
+	out := make(chan Error)
 
-	collector.ringBuffer.Do(func(err interface{}) {
-		if err != nil {
-			errs = append(errs, err.(Error))
-		}
-	})
+	go func() {
+		defer close(out)
+		ambient.Log(DEBUG, "dumping errors...")
+		collector.ringBuffer.Do(func(err interface{}) {
+			if err != nil {
+				ambient.Log(DEBUG, err)
+				out <- err.(Error)
+			}
+		})
+	}()
 
-	return errs
+	return out
 }

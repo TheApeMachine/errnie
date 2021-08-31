@@ -18,18 +18,20 @@ Error wraps Go's built in error type to extend its functionality with a
 severity level.
 */
 type Error struct {
-	err     error
-	errType ErrType
+	Err     error
+	ErrType ErrType
 }
 
 /*
 ToString outputs the error message as it sits in the wrapperd Go error.
 */
 func (wrapper Error) ToString() string {
-	return wrapper.err.Error()
+	ambient.trace.Caller("\xF0\x9F\x90\x9E")
+	return wrapper.Err.Error()
 }
 
 func getRealErrors(errs []interface{}) []error {
+	ambient.trace.Caller("\xF0\x9F\x90\x9E", errs)
 	var real []error
 
 	if len(errs) == 0 {
@@ -41,7 +43,11 @@ func getRealErrors(errs []interface{}) []error {
 			continue
 		}
 
-		real = append(real, err.(error))
+		switch err := err.(type) {
+		case error:
+			ambient.trace.Caller("\xF0\x9F\x94\xA5", err)
+			real = append(real, err)
+		}
 	}
 
 	return real

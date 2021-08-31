@@ -9,7 +9,7 @@ import (
 
 func TestTrace(t *testing.T) {
 	Convey("Given an ambient context", t, func() {
-		ctx := NewContext(AmbientContext{}, "test")
+		ctx := NewContext(AmbientContext{})
 		Convey("It should be able to trace: ", func() {
 			fmt.Println()
 			ctx.Trace()

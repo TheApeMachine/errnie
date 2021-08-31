@@ -70,7 +70,7 @@ func (advisor DefaultAdvisor) Static(ringBuffer *ring.Ring) bool {
 	nc := 0
 
 	ringBuffer.Do(func(p interface{}) {
-		if advisor.isInTypeList([]ErrType{PANIC, FATAL, CRITICAL}, p.(Error).errType) {
+		if advisor.isInTypeList([]ErrType{PANIC, FATAL, CRITICAL}, p.(Error).ErrType) {
 			nc++
 		} else {
 			yc++

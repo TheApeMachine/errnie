@@ -1,6 +1,8 @@
 package errnie
 
-import "github.com/pterm/pterm"
+import (
+	"github.com/pterm/pterm"
+)
 
 /*
 Logger is a custom logger which allows a consistent interface to
@@ -38,5 +40,5 @@ func (logger *Logger) Send(logLevel ErrType, msgs ...interface{}) bool {
 		}
 	}
 
-	return false
+	return true
 }

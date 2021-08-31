@@ -2,29 +2,22 @@ package errnie
 
 import (
 	"os"
-
-	"github.com/google/uuid"
 )
 
-type HandlerType uint
+type OpCode uint
 
 const (
-	NOOP HandlerType = iota
-	EXIT
+	NOP OpCode = iota
+	KIL
+	REC
+	RET
 	CTX
 )
 
-func Kill(handlerType HandlerType) func(interface{}) {
-	switch handlerType {
-	case EXIT:
-		return exit
-	case CTX:
-		return ctx
-	}
-
-	return noop
+var opcodes = map[OpCode]func(){
+	NOP: nop, KIL: kil, REC: nop, RET: nop, CTX: ctx,
 }
 
-func noop(null interface{}) {}
-func exit(code interface{}) { os.Exit(code.(int)) }
-func ctx(id interface{})    { ambient.Cancel(id.(uuid.UUID)) }
+func nop() {}
+func kil() { os.Exit(1) }
+func ctx() {}

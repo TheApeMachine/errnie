@@ -1,7 +1,6 @@
 package errnie
 
 import (
-	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,20 +20,16 @@ const (
 var ambient AmbientContext
 
 func init() {
-	ambient = NewContext(AmbientContext{}, "")
-	ambient.Log(INFO, "errnie running as ambient context")
+	ambient = NewContext(AmbientContext{})
 }
 
-func NewContext(contextType AmbientContext, namespace string) AmbientContext {
-	return contextType.initialize(namespace)
+func NewContext(contextType AmbientContext) AmbientContext {
+	return contextType.initialize()
 }
 
 type AmbientContext struct {
 	ID    uuid.UUID
 	TS    int64
-	nmsp  string
-	ctxs  map[uuid.UUID][]context.Context
-	cnls  map[uuid.UUID][]context.CancelFunc
 	errs  *Collector
 	logs  *Logger
 	trace *Tracer
@@ -44,11 +39,16 @@ func Ambient() AmbientContext {
 	return ambient
 }
 
-func (ambient AmbientContext) initialize(namespace string) AmbientContext {
+func (ambient AmbientContext) initialize() AmbientContext {
+	ringSize := 10
+
+	if newSize := viper.GetInt("errnie.collectors.default.buffer"); newSize != 0 {
+		ringSize = newSize
+	}
+
 	ambient.ID = uuid.New()
 	ambient.TS = time.Now().UnixNano()
-	ambient.nmsp = namespace
-	ambient.errs = NewCollector(viper.GetInt("errnie.collectors.default.buffer"))
+	ambient.errs = NewCollector(ringSize)
 	ambient.logs = NewLogger(&ConsoleLogger{})
 	ambient.trace = NewTracer(true)
 
@@ -59,28 +59,30 @@ func (ambient AmbientContext) initialize(namespace string) AmbientContext {
 Handle takes an error type, an arbitrary but basic handler functor, and a splat of errors.
 The functor may be nil, it will simply do nothing but add the errors to the collector and logging.
 */
-func (ambient AmbientContext) Handle(
-	errType ErrType, handler func(interface{}), arg interface{}, errs ...interface{},
-) bool {
-	ambient.Log(DEBUG, "errnie.AmbientContext.Handle <-", errType, handler, arg, errs)
+func (ambient AmbientContext) Handle(errType ErrType, op OpCode, errs ...interface{}) bool {
+	ambient.trace.Caller("\xF0\x9F\x90\x9E", op, errs)
+	var ok bool = true
 
-	var bad bool
-
-	if bad = ambient.Add(errType, errs...) && ambient.Log(errType, errs...); bad {
-		if handler != nil {
-			handler(arg)
-		}
-
-		return bad
+	if ok = ambient.Add(errType, errs...) && ambient.Log(errType, errs...); !ok {
+		opcodes[op]()
+		ambient.trace.Caller("\xF0\x9F\x91\x8E", "BAD")
+		return ok
 	}
 
-	return bad
+	ambient.trace.Caller("\xF0\x9F\x91\x8D", "OK")
+	return ok
 }
 
 func (ambient AmbientContext) Add(errType ErrType, errs ...interface{}) bool {
+	ambient.trace.Caller("\xF0\x9F\x90\x9E", errs)
 	return ambient.errs.Add(errs, errType)
 }
 
 func (ambient AmbientContext) Log(errType ErrType, msgs ...interface{}) bool {
+	ambient.trace.Caller("\xF0\x9F\x90\x9E", errType, msgs)
 	return ambient.logs.Send(errType, msgs...)
+}
+
+func (ambient AmbientContext) Dump() chan Error {
+	return ambient.errs.Dump()
 }
