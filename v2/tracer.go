@@ -51,25 +51,25 @@ func (tracer Tracer) Caller(prefix string, suffix ...interface{}) {
 }
 
 func (ambient AmbientContext) Trace(suffix ...interface{}) {
-	if !viper.GetBool("trace") {
+	if !viper.GetViper().GetBool("trace") {
 		return
 	}
 
-	ambient.trace.Caller("\xF0\x9F\x98\x9B <>", suffix...)
+	//ambient.trace.Caller("\xF0\x9F\x98\x9B <>", suffix...)
 }
 
 func (ambient AmbientContext) TraceIn(suffix ...interface{}) {
-	if !viper.GetBool("trace") {
+	if !viper.GetViper().GetBool("trace") {
 		return
 	}
 
-	ambient.trace.Caller("\xF0\x9F\x94\x8D <-", suffix...)
+	//ambient.trace.Caller("\xF0\x9F\x94\x8D <-", suffix...)
 }
 
 func (ambient AmbientContext) TraceOut(suffix ...interface{}) {
-	if !viper.GetBool("trace") {
+	if !viper.GetViper().GetBool("trace") {
 		return
 	}
 
-	ambient.trace.Caller("\xF0\x9F\x98\x8E ->", suffix...)
+	//ambient.trace.Caller("\xF0\x9F\x98\x8E ->", suffix...)
 }
