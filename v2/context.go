@@ -28,11 +28,13 @@ func NewContext(contextType AmbientContext) AmbientContext {
 }
 
 type AmbientContext struct {
-	ID    uuid.UUID
-	TS    int64
-	errs  *Collector
-	logs  *Logger
-	trace *Tracer
+	ID     uuid.UUID
+	TS     int64
+	errs   *Collector
+	logs   *Logger
+	trace  *Tracer
+	stdout bool
+	file   bool
 }
 
 func Ambient() AmbientContext {
@@ -42,15 +44,24 @@ func Ambient() AmbientContext {
 func (ambient AmbientContext) initialize() AmbientContext {
 	ringSize := 10
 
-	if newSize := viper.GetInt("errnie.collectors.default.buffer"); newSize != 0 {
+	if newSize := viper.GetViper().GetInt("errnie.collectors.default.buffer"); newSize != 0 {
 		ringSize = newSize
 	}
 
 	ambient.ID = uuid.New()
 	ambient.TS = time.Now().UnixNano()
 	ambient.errs = NewCollector(ringSize)
-	ambient.logs = NewLogger(&ConsoleLogger{})
 	ambient.trace = NewTracer(true)
+	ambient.stdout = viper.GetViper().GetBool("stdout")
+	ambient.file = viper.GetViper().GetBool("file")
+
+	if ambient.stdout {
+		ambient.logs = NewLogger(&ConsoleLogger{})
+	}
+
+	if ambient.file {
+		ambient.logs = NewLogger(&FileLogger{})
+	}
 
 	return ambient
 }
