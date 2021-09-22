@@ -28,13 +28,12 @@ func NewContext(contextType AmbientContext) AmbientContext {
 }
 
 type AmbientContext struct {
-	ID     uuid.UUID
-	TS     int64
-	errs   *Collector
-	logs   *Logger
-	trace  *Tracer
-	stdout bool
-	file   bool
+	ID    uuid.UUID
+	TS    int64
+	errs  *Collector
+	logs  *Logger
+	trace *Tracer
+	file  bool
 }
 
 func Ambient() AmbientContext {
@@ -52,12 +51,8 @@ func (ambient AmbientContext) initialize() AmbientContext {
 	ambient.TS = time.Now().UnixNano()
 	ambient.errs = NewCollector(ringSize)
 	ambient.trace = NewTracer(true)
-	ambient.stdout = viper.GetViper().GetBool("stdout")
+	ambient.logs = NewLogger(&ConsoleLogger{})
 	ambient.file = viper.GetViper().GetBool("file")
-
-	if ambient.stdout {
-		ambient.logs = NewLogger(&ConsoleLogger{})
-	}
 
 	if ambient.file {
 		ambient.logs = NewLogger(&FileLogger{})
