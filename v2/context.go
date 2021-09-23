@@ -1,89 +1,77 @@
 package errnie
 
-import (
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/spf13/viper"
-)
-
-type ContextType uint
-
-const (
-	TODO ContextType = iota
-	BACKGROUND
-	CANCEL
-	TIMEOUT
-	DEADLINE
-)
-
-var ambient AmbientContext
+var ambctx *AmbientContext
 
 func init() {
-	ambient = NewContext(AmbientContext{})
-}
-
-func NewContext(contextType AmbientContext) AmbientContext {
-	return contextType.initialize()
-}
-
-type AmbientContext struct {
-	ID    uuid.UUID
-	TS    int64
-	errs  *Collector
-	logs  *Logger
-	trace *Tracer
-	file  bool
-}
-
-func Ambient() AmbientContext {
-	return ambient
-}
-
-func (ambient AmbientContext) initialize() AmbientContext {
-	ringSize := 10
-
-	if newSize := viper.GetViper().GetInt("errnie.collectors.default.buffer"); newSize != 0 {
-		ringSize = newSize
-	}
-
-	ambient.ID = uuid.New()
-	ambient.TS = time.Now().UnixNano()
-	ambient.errs = NewCollector(ringSize)
-	ambient.trace = NewTracer(true)
-	ambient.logs = NewLogger(&ConsoleLogger{})
-
-	return ambient
+	ambctx = New()
 }
 
 /*
-Handle takes an error type, an arbitrary but basic handler functor, and a splat of errors.
-The functor may be nil, it will simply do nothing but add the errors to the collector and logging.
+AmbientContext is the main wrapper for errnie and tries to keep the amount of
+having to deal with this tool as minimal as possible. I wanted something that
+I did not have to pass around all the time, cluttering up method signatures
+and basically being a repetative hassle. I feel in Go's case, having your own
+favorite way of error handling always at the ready can only be a good thing.
+And yes, I got inspired (and shamelessly stole) this setup from Viper.
 */
-func (ambient AmbientContext) Handle(errType ErrType, op OpCode, errs ...interface{}) bool {
-	ambient.trace.Caller("\xF0\x9F\x90\x9E", op, errs)
-	var ok bool = true
+type AmbientContext struct {
+	collect *Collector
+	log     *Logger
+	trace   *Tracer
+	ERR     error
+	OK      bool
+}
 
-	if ok = ambient.Add(errType, errs...) && ambient.Log(errType, errs...); !ok {
-		opcodes[op]()
+/*
+New gives us back a reference to the instance, so we should be able to call
+the package anywhere we want in our host code.
+*/
+func New() *AmbientContext {
+	ambient := new(AmbientContext)
+	ambient.collect = NewCollector(20)
+	ambient.trace = NewTracer(true)
+	ambient.log = NewLogger(&ConsoleLogger{})
+	ambient.ERR = nil
+	ambient.OK = true
+	return ambctx
+}
+
+func Handles(errs ...interface{}) { ambctx.Handles(errs...) }
+func Add(errs ...interface{})     { ambctx.Add(errs...) }
+func Log(errs ...interface{})     { ambctx.Log(errs...) }
+
+/*
+Handles the error in some semi-significant want so we don't have to think too
+much about it and sets the err and ok values so we can do some nifty syntactical
+sugar tricks upstream.
+*/
+func (ambient *AmbientContext) Handles(errs ...interface{}) {
+	ambient.trace.Caller("\xF0\x9F\x90\x9E", errs)
+
+	ambient.ERR = nil
+	ambient.OK = true
+
+	ambient.Add(errs...)
+	ambient.Log(errs...)
+
+	if !ambient.OK {
 		ambient.trace.Caller("\xF0\x9F\x91\x8E", "BAD")
-		return ok
+		return
 	}
 
 	ambient.trace.Caller("\xF0\x9F\x91\x8D", "OK")
-	return ok
 }
 
-func (ambient AmbientContext) Add(errType ErrType, errs ...interface{}) bool {
+func (ambient AmbientContext) Add(errs ...interface{}) bool {
 	ambient.trace.Caller("\xF0\x9F\x90\x9E", errs)
-	return ambient.errs.Add(errs, errType)
+	return ambient.collect.Add(errs)
 }
 
-func (ambient AmbientContext) Log(errType ErrType, msgs ...interface{}) bool {
-	ambient.trace.Caller("\xF0\x9F\x90\x9E", errType, msgs)
-	return ambient.logs.Send(errType, msgs...)
+func (ambient AmbientContext) Log(msgs ...interface{}) bool {
+	ambient.trace.Caller("\xF0\x9F\x90\x9E", msgs)
+	return ambient.log.Send(msgs...)
 }
 
 func (ambient AmbientContext) Dump() chan Error {
-	return ambient.errs.Dump()
+	return ambient.collect.Dump()
 }

@@ -7,12 +7,10 @@ import (
 	"github.com/pterm/pterm"
 )
 
-type Tracer struct {
-	on bool
-}
+type Tracer struct{}
 
 func NewTracer(on bool) *Tracer {
-	return &Tracer{on: on}
+	return &Tracer{}
 }
 
 func (tracer Tracer) Caller(prefix string, suffix ...interface{}) {
@@ -38,21 +36,29 @@ func (tracer Tracer) Caller(prefix string, suffix ...interface{}) {
 	case "collector.goAdd":
 		pterm.Debug.Println(prefix, "-- finding real errors", suffix)
 	default:
-		pterm.Debug.Prefix = pterm.Prefix{Text: "TRACER", Style: pterm.NewStyle(pterm.BgBlack, pterm.FgDarkGray)}
+		pterm.Debug.Prefix = pterm.Prefix{
+			Text: "TRACER", Style: pterm.NewStyle(pterm.BgBlack, pterm.FgDarkGray),
+		}
 		pterm.Debug.Println(prefix, fl, frame.Line, fp, suffix)
 	}
 
-	pterm.Debug.Prefix = pterm.Prefix{Text: "DEBUG", Style: pterm.NewStyle(pterm.BgDarkGray, pterm.FgBlack)}
+	pterm.Debug.Prefix = pterm.Prefix{Text: "DEBUG", Style: pterm.NewStyle(
+		pterm.BgDarkGray, pterm.FgBlack),
+	}
 }
 
-func (ambient AmbientContext) Trace(suffix ...interface{}) {
-	ambient.trace.Caller("\xF0\x9F\x98\x9B <>", suffix...)
+func Trace(suffix ...interface{})    { ambctx.Trace(suffix...) }
+func TraceIn(suffix ...interface{})  { ambctx.TraceIn(suffix...) }
+func TraceOut(suffix ...interface{}) { ambctx.TraceOut(suffix...) }
+
+func (ambctx *AmbientContext) Trace(suffix ...interface{}) {
+	ambctx.trace.Caller("\xF0\x9F\x98\x9B <>", suffix...)
 }
 
-func (ambient AmbientContext) TraceIn(suffix ...interface{}) {
-	ambient.trace.Caller("\xF0\x9F\x94\x8D <-", suffix...)
+func (ambctx *AmbientContext) TraceIn(suffix ...interface{}) {
+	ambctx.trace.Caller("\xF0\x9F\x94\x8D <-", suffix...)
 }
 
-func (ambient AmbientContext) TraceOut(suffix ...interface{}) {
-	ambient.trace.Caller("\xF0\x9F\x98\x8E ->", suffix...)
+func (ambctx *AmbientContext) TraceOut(suffix ...interface{}) {
+	ambctx.trace.Caller("\xF0\x9F\x98\x8E ->", suffix...)
 }

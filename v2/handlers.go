@@ -7,17 +7,16 @@ import (
 type OpCode uint
 
 const (
-	NOP OpCode = iota
-	KIL
-	REC
-	RET
-	CTX
+	NOOP OpCode = iota
+	KILL
+	RECV
+	RETR
+	RTRN
 )
 
 var opcodes = map[OpCode]func(){
-	NOP: nop, KIL: kil, REC: nop, RET: nop, CTX: ctx,
+	NOOP: noop, KILL: kill, RECV: noop, RETR: noop, RTRN: noop,
 }
 
-func nop() {}
-func kil() { os.Exit(1) }
-func ctx() {}
+func noop() {}
+func kill() { os.Exit(1) }

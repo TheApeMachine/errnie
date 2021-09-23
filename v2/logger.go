@@ -2,7 +2,6 @@ package errnie
 
 import (
 	"github.com/pterm/pterm"
-	"github.com/spf13/viper"
 )
 
 /*
@@ -16,19 +15,17 @@ type Logger struct {
 func NewLogger(channels ...LogChannel) *Logger {
 	pterm.PrintDebugMessages = true
 
-	if !viper.GetViper().GetBool("debug") {
-		pterm.PrintDebugMessages = false
-	}
-
 	return &Logger{
 		channels: channels,
 	}
 }
 
-func (logger *Logger) Send(logLevel ErrType, msgs ...interface{}) bool {
+func (logger *Logger) Send(msgs ...interface{}) bool {
 	if logger == nil {
 		return true
 	}
+
+	logLevel := DEBUG
 
 	for _, channel := range logger.channels {
 		switch logLevel {
@@ -45,6 +42,8 @@ func (logger *Logger) Send(logLevel ErrType, msgs ...interface{}) bool {
 		case INFO:
 			return channel.Info(msgs...)
 		case DEBUG:
+			return channel.Debug(msgs...)
+		default:
 			return channel.Debug(msgs...)
 		}
 	}

@@ -68,6 +68,7 @@ func (logChannel ConsoleLogger) Info(msgs ...interface{}) bool {
 	pterm.Info.Println(msgs...)
 	return false
 }
+
 func (logChannel ConsoleLogger) Warning(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
 		return true

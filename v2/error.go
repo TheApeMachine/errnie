@@ -26,12 +26,12 @@ type Error struct {
 ToString outputs the error message as it sits in the wrapperd Go error.
 */
 func (wrapper Error) ToString() string {
-	ambient.trace.Caller("\xF0\x9F\x90\x9E")
+	ambctx.trace.Caller("\xF0\x9F\x90\x9E")
 	return wrapper.Err.Error()
 }
 
 func getRealErrors(errs []interface{}) []error {
-	ambient.trace.Caller("\xF0\x9F\x90\x9E", errs)
+	ambctx.trace.Caller("\xF0\x9F\x90\x9E", errs)
 	var real []error
 
 	if len(errs) == 0 {
@@ -45,7 +45,7 @@ func getRealErrors(errs []interface{}) []error {
 
 		switch err := err.(type) {
 		case error:
-			ambient.trace.Caller("\xF0\x9F\x94\xA5", err)
+			ambctx.trace.Caller("\xF0\x9F\x94\xA5", err)
 			real = append(real, err)
 		}
 	}
