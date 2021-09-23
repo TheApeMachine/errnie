@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/pterm/pterm"
-	"github.com/spf13/viper"
 )
 
 type Tracer struct {
@@ -17,10 +16,6 @@ func NewTracer(on bool) *Tracer {
 }
 
 func (tracer Tracer) Caller(prefix string, suffix ...interface{}) {
-	if !tracer.on || !viper.GetViper().GetBool("trace") {
-		return
-	}
-
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(3, pc)
 	frame, _ := runtime.CallersFrames(pc[:n]).Next()
@@ -51,25 +46,13 @@ func (tracer Tracer) Caller(prefix string, suffix ...interface{}) {
 }
 
 func (ambient AmbientContext) Trace(suffix ...interface{}) {
-	if !viper.GetViper().GetBool("trace") {
-		return
-	}
-
 	ambient.trace.Caller("\xF0\x9F\x98\x9B <>", suffix...)
 }
 
 func (ambient AmbientContext) TraceIn(suffix ...interface{}) {
-	if !viper.GetViper().GetBool("trace") {
-		return
-	}
-
 	ambient.trace.Caller("\xF0\x9F\x94\x8D <-", suffix...)
 }
 
 func (ambient AmbientContext) TraceOut(suffix ...interface{}) {
-	if !viper.GetViper().GetBool("trace") {
-		return
-	}
-
 	ambient.trace.Caller("\xF0\x9F\x98\x8E ->", suffix...)
 }
