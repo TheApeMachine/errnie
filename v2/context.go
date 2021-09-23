@@ -52,11 +52,6 @@ func (ambient AmbientContext) initialize() AmbientContext {
 	ambient.errs = NewCollector(ringSize)
 	ambient.trace = NewTracer(true)
 	ambient.logs = NewLogger(&ConsoleLogger{})
-	ambient.file = viper.GetViper().GetBool("file")
-
-	if ambient.file {
-		ambient.logs = NewLogger(&FileLogger{})
-	}
 
 	return ambient
 }
