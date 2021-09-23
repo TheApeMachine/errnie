@@ -27,12 +27,12 @@ New gives us back a reference to the instance, so we should be able to call
 the package anywhere we want in our host code.
 */
 func New() *AmbientContext {
-	ambient := new(AmbientContext)
-	ambient.collect = NewCollector(20)
-	ambient.trace = NewTracer(true)
-	ambient.log = NewLogger(&ConsoleLogger{})
-	ambient.ERR = nil
-	ambient.OK = true
+	ambctx := new(AmbientContext)
+	ambctx.collect = NewCollector(20)
+	ambctx.trace = NewTracer(true)
+	ambctx.log = NewLogger(&ConsoleLogger{})
+	ambctx.ERR = nil
+	ambctx.OK = true
 	return ambctx
 }
 
@@ -45,33 +45,33 @@ Handles the error in some semi-significant want so we don't have to think too
 much about it and sets the err and ok values so we can do some nifty syntactical
 sugar tricks upstream.
 */
-func (ambient *AmbientContext) Handles(errs ...interface{}) {
-	ambient.trace.Caller("\xF0\x9F\x90\x9E", errs)
+func (ambctx *AmbientContext) Handles(errs ...interface{}) {
+	ambctx.trace.Caller("\xF0\x9F\x90\x9E", errs)
 
-	ambient.ERR = nil
-	ambient.OK = true
+	ambctx.ERR = nil
+	ambctx.OK = true
 
-	ambient.Add(errs...)
-	ambient.Log(errs...)
+	ambctx.Add(errs...)
+	ambctx.Log(errs...)
 
-	if !ambient.OK {
-		ambient.trace.Caller("\xF0\x9F\x91\x8E", "BAD")
+	if !ambctx.OK {
+		ambctx.trace.Caller("\xF0\x9F\x91\x8E", "BAD")
 		return
 	}
 
-	ambient.trace.Caller("\xF0\x9F\x91\x8D", "OK")
+	ambctx.trace.Caller("\xF0\x9F\x91\x8D", "OK")
 }
 
-func (ambient AmbientContext) Add(errs ...interface{}) bool {
-	ambient.trace.Caller("\xF0\x9F\x90\x9E", errs)
-	return ambient.collect.Add(errs)
+func (ambctx *AmbientContext) Add(errs ...interface{}) bool {
+	ambctx.trace.Caller("\xF0\x9F\x90\x9E", errs)
+	return ambctx.collect.Add(errs)
 }
 
-func (ambient AmbientContext) Log(msgs ...interface{}) bool {
-	ambient.trace.Caller("\xF0\x9F\x90\x9E", msgs)
-	return ambient.log.Send(msgs...)
+func (ambctx *AmbientContext) Log(msgs ...interface{}) bool {
+	ambctx.trace.Caller("\xF0\x9F\x90\x9E", msgs)
+	return ambctx.log.Send(msgs...)
 }
 
-func (ambient AmbientContext) Dump() chan Error {
-	return ambient.collect.Dump()
+func (ambctx *AmbientContext) Dump() chan Error {
+	return ambctx.collect.Dump()
 }
