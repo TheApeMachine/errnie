@@ -15,7 +15,7 @@ func NewTracer(on bool) *Tracer {
 
 func (tracer Tracer) Caller(prefix string, suffix ...interface{}) {
 	pc := make([]uintptr, 15)
-	n := runtime.Callers(3, pc)
+	n := runtime.Callers(4, pc)
 	frame, _ := runtime.CallersFrames(pc[:n]).Next()
 
 	fnpart := strings.Split(frame.Function, ".")

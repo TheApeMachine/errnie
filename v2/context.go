@@ -1,5 +1,9 @@
 package errnie
 
+import (
+	"fmt"
+)
+
 var ambctx *AmbientContext
 
 func init() {
@@ -67,9 +71,11 @@ func (ambctx *AmbientContext) Add(errs ...interface{}) bool {
 	return ambctx.collect.Add(errs)
 }
 
-func (ambctx *AmbientContext) Log(msgs ...interface{}) bool {
+func (ambctx *AmbientContext) Log(msgs ...interface{}) *AmbientContext {
 	ambctx.trace.Caller("\xF0\x9F\x90\x9E", msgs)
-	return ambctx.log.Send(msgs...)
+	ambctx.OK = ambctx.log.Send(msgs...)
+	ambctx.ERR = fmt.Errorf("%v", msgs)
+	return ambctx
 }
 
 func (ambctx *AmbientContext) Dump() chan Error {
