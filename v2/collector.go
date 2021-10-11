@@ -24,7 +24,6 @@ func NewCollector(ringSize int) *Collector {
 Add an error to the Collector's ring buffer and report OK if no errors.
 */
 func (collector *Collector) Add(errs []interface{}) bool {
-	ambctx.trace.Caller("\xF0\x9F\x90\x9E", errs)
 	real := getRealErrors(errs)
 
 	for _, err := range real {
@@ -43,7 +42,6 @@ func (collector *Collector) Add(errs []interface{}) bool {
 Dump returns all the errors currently present in the ring buffer.
 */
 func (collector *Collector) Dump() chan Error {
-	ambctx.trace.Caller("\xF0\x9F\x90\x9E")
 	out := make(chan Error)
 
 	go func() {

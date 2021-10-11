@@ -3,6 +3,7 @@ module github.com/theapemachine/errnie/v2
 go 1.16
 
 require (
+	devt.de/krotik/eliasdb v1.2.0 // indirect
 	github.com/pterm/pterm v0.12.29
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/viper v1.8.1

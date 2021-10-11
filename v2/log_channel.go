@@ -78,11 +78,19 @@ func (logChannel ConsoleLogger) Warning(msgs ...interface{}) bool {
 	return false
 }
 
+/*
+Debug shows a muted colored message in the terminal when `debug: true`
+in the host program's config file.
+*/
 func (logChannel ConsoleLogger) Debug(msgs ...interface{}) bool {
 	if len(msgs) == 0 || msgs[0] == nil {
+		// No messages, no errors, so `we are ok`.
 		return true
 	}
 
+	// We went passed the guard above, that means we have messages that
+	// potentially could be errors. It is up to the user to decide which
+	// values to check for, but to be safe we say `we are not ok`.
 	pterm.Debug.Println(msgs...)
 	return false
 }

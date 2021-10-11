@@ -20,6 +20,19 @@ func NewLogger(channels ...LogChannel) *Logger {
 	}
 }
 
+func (logger *Logger) Debug(msgs ...interface{}) bool {
+	// We always return the answer to the question: are we ok?
+	// Thus we beginning in a happy state here.
+	state := true
+
+	for _, channel := range logger.channels {
+		state = channel.Debug(msgs...)
+	}
+
+	// TODO: This is far from a flawless answer.
+	return state
+}
+
 func (logger *Logger) Send(msgs ...interface{}) bool {
 	if logger == nil {
 		return true
