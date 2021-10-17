@@ -11,7 +11,7 @@ to use the `errnie.Handles()` and wrap it around the error. To use
 errnie's built-in handlers you can use it `in the middle` like so:
 
 ```go
-errnie.Handles(errnie.KILL(err))
+errnie.Handles(err).With(errnie.KILL)
 ```
 
 in which case you have chosen to exit the program if the error was
@@ -56,19 +56,31 @@ func (ambctx *AmbientContext) With(opcode OpCode) *AmbientContext {
 	return ambctx
 }
 
+/*
+kill exits the program with a generic error state.
+Added benefit, now os.Exit is workable in a test.
+*/
 func (ambctx *AmbientContext) kill() *AmbientContext {
-	if ambctx.ERR != nil {
+	if ambctx != nil && ambctx.ERR != nil {
 		os.Exit(1)
 	}
 
 	return ambctx
 }
 
+/*
+recv, or recover, will break successfully out of any error
+or panic state and return control back to the main goroutine.
+*/
 func (ambctx *AmbientContext) recv() *AmbientContext {
 	ctxguard.Rescue()()
 	return ambctx
 }
 
+/*
+noop is a `no operation` handler which is used for any remaining
+scenario that is not implemented yet. It does nothing.
+*/
 func (ambctx *AmbientContext) noop() *AmbientContext {
 	return ambctx
 }
