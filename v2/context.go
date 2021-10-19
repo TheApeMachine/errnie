@@ -50,7 +50,7 @@ func New() *AmbientContext {
 	ambctx := new(AmbientContext)
 	ambctx.collect = NewCollector(20)
 	ambctx.trace = NewTracer(true)
-	ambctx.Logs = NewLogger(&ConsoleLogger{})
+	ambctx.Logs = NewLogger(&ConsoleLogger{}, NewElasticLogger())
 	ambctx.ERR = nil
 	ambctx.OK = true
 	Logs = ambctx.Logs
@@ -87,7 +87,7 @@ func (ambctx *AmbientContext) Handles(errs ...interface{}) *AmbientContext {
 	// We defer the passed in values to the add and log methods described below,
 	// which will also set the ERR and OK values when needed.
 	ambctx.Add(errs...)
-	ambctx.Log(errs...)
+	ambctx.Logs.Error(errs...)
 
 	// Return ourselves so we open up a chainable call setup.
 	return ambctx
