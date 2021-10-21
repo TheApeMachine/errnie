@@ -21,25 +21,37 @@ func NewLogger(channels ...LogChannel) *Logger {
 }
 
 func (logger *Logger) Debug(msgs ...interface{}) bool {
-	// We always return the answer to the question: are we ok?
-	// Thus we beginning in a happy state here.
-	state := true
+	return logger.LogWithLevel("debug", msgs)
+}
 
-	for _, channel := range logger.channels {
-		state = channel.Debug(msgs...)
-	}
+func (logger *Logger) Warning(msgs ...interface{}) bool {
+	return logger.LogWithLevel("warning", msgs)
+}
 
-	// TODO: This is far from a flawless answer.
-	return state
+func (logger *Logger) Info(msgs ...interface{}) bool {
+	return logger.LogWithLevel("info", msgs)
 }
 
 func (logger *Logger) Error(msgs ...interface{}) bool {
+	return logger.LogWithLevel("error", msgs)
+}
+
+func (logger *Logger) LogWithLevel(level string, msgs ...interface{}) bool {
 	// We always return the answer to the question: are we ok?
 	// Thus we beginning in a happy state here.
 	state := true
 
 	for _, channel := range logger.channels {
-		state = channel.Error(msgs...)
+		switch level {
+		case "error":
+			state = channel.Error(msgs...)
+		case "warning":
+			state = channel.Warning(msgs...)
+		case "info":
+			state = channel.Info(msgs...)
+		case "debug":
+			state = channel.Debug(msgs...)
+		}
 	}
 
 	// TODO: This is far from a flawless answer.
