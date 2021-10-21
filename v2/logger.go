@@ -21,19 +21,19 @@ func NewLogger(channels ...LogChannel) *Logger {
 }
 
 func (logger *Logger) Debug(msgs ...interface{}) bool {
-	return logger.LogWithLevel("debug", msgs)
+	return logger.LogWithLevel("debug", msgs...)
 }
 
 func (logger *Logger) Warning(msgs ...interface{}) bool {
-	return logger.LogWithLevel("warning", msgs)
+	return logger.LogWithLevel("warning", msgs...)
 }
 
 func (logger *Logger) Info(msgs ...interface{}) bool {
-	return logger.LogWithLevel("info", msgs)
+	return logger.LogWithLevel("info", msgs...)
 }
 
 func (logger *Logger) Error(msgs ...interface{}) bool {
-	return logger.LogWithLevel("error", msgs)
+	return logger.LogWithLevel("error", msgs...)
 }
 
 func (logger *Logger) LogWithLevel(level string, msgs ...interface{}) bool {
