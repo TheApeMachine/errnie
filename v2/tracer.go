@@ -1,6 +1,7 @@
 package errnie
 
 import (
+	"fmt"
 	"runtime"
 	"strings"
 
@@ -25,7 +26,7 @@ func NewTracer(on bool) *Tracer {
 Caller extracts useful information from the call stack and presents it in a
 structured form to the user to aid in debugging processes.
 */
-func (tracer Tracer) Caller(prefix string, suffix ...interface{}) {
+func (tracer Tracer) Caller(prefix string, suffix ...interface{}) string {
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(4, pc)
 	frame, _ := runtime.CallersFrames(pc[:n]).Next()
@@ -38,63 +39,69 @@ func (tracer Tracer) Caller(prefix string, suffix ...interface{}) {
 
 	pterm.Debug.Prefix = pterm.Prefix{Text: "ERRNIE", Style: pterm.NewStyle(pterm.BgBlack, pterm.FgDarkGray)}
 
+	var out string
+
 	switch fl + fp {
 	case "context.goHandle":
-		pterm.Debug.Println(prefix, "-- handling potential errors", suffix)
+		out = fmt.Sprintf("%v -- handling potential errors %v", prefix, suffix)
 	case "context.goLog":
-		pterm.Debug.Println(prefix, "-- logging potential errors", suffix)
+		out = fmt.Sprintf("%v -- logging potential errors %v", prefix, suffix)
 	case "context.goAdd":
-		pterm.Debug.Println(prefix, "-- adding potential errors", suffix)
+		out = fmt.Sprintf("%v -- adding potential errors %v", prefix, suffix)
 	case "collector.goAdd":
-		pterm.Debug.Println(prefix, "-- finding real errors", suffix)
+		out = fmt.Sprintf("%v -- finding real errors %v", prefix, suffix)
 	default:
 		pterm.Debug.Prefix = pterm.Prefix{
 			Text: "TRACER", Style: pterm.NewStyle(pterm.BgBlack, pterm.FgDarkGray),
 		}
-		pterm.Debug.Println(prefix, fl, frame.Line, fp, suffix)
+		out = fmt.Sprintf("%v %v %v %v %v", prefix, fl, frame.Line, fp, suffix)
 	}
+
+	pterm.Debug.Println(out)
 
 	pterm.Debug.Prefix = pterm.Prefix{Text: "DEBUG", Style: pterm.NewStyle(
 		pterm.BgDarkGray, pterm.FgBlack),
 	}
+
+	return out
 }
 
 /*
 Trace is the generic tracing method one can call, designed to go at any
 desired place in the code.
 */
-func Trace(suffix ...interface{}) { ambctx.Trace(suffix...) }
+func Trace(suffix ...interface{}) string { return ambctx.Trace(suffix...) }
 
 /*
 TraceIn was designed to go at the beginning of a method, but this is not
 required. Following that pattern does have the benefit of the information
 being structured in a way that makes sense.
 */
-func TraceIn(suffix ...interface{}) { ambctx.TraceIn(suffix...) }
+func TraceIn(suffix ...interface{}) string { return ambctx.TraceIn(suffix...) }
 
 /*
 TraceOut can be used at the end of a method, before the return. One good
 use-case is to see which data the method is returning with.
 */
-func TraceOut(suffix ...interface{}) { ambctx.TraceOut(suffix...) }
+func TraceOut(suffix ...interface{}) string { return ambctx.TraceOut(suffix...) }
 
 /*
 Trace is the proxied method described above with a similar name.
 */
-func (ambctx *AmbientContext) Trace(suffix ...interface{}) {
-	ambctx.trace.Caller("\xF0\x9F\x98\x9B <>", suffix...)
+func (ambctx *AmbientContext) Trace(suffix ...interface{}) string {
+	return ambctx.trace.Caller("\xF0\x9F\x98\x9B <>", suffix...)
 }
 
 /*
 TraceIn is the proxied method described above with a similar name.
 */
-func (ambctx *AmbientContext) TraceIn(suffix ...interface{}) {
-	ambctx.trace.Caller("\xF0\x9F\x94\x8D <-", suffix...)
+func (ambctx *AmbientContext) TraceIn(suffix ...interface{}) string {
+	return ambctx.trace.Caller("\xF0\x9F\x94\x8D <-", suffix...)
 }
 
 /*
 TraceOut is the proxied method described above with a similar name.
 */
-func (ambctx *AmbientContext) TraceOut(suffix ...interface{}) {
-	ambctx.trace.Caller("\xF0\x9F\x98\x8E ->", suffix...)
+func (ambctx *AmbientContext) TraceOut(suffix ...interface{}) string {
+	return ambctx.trace.Caller("\xF0\x9F\x98\x8E ->", suffix...)
 }
