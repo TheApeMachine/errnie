@@ -1,6 +1,8 @@
 package errnie
 
 import (
+	"runtime"
+
 	"github.com/pterm/pterm"
 )
 
@@ -56,7 +58,9 @@ func (logChannel ConsoleLogger) Error(msgs ...interface{}) bool {
 		return true
 	}
 
-	pterm.Error.Println(msgs...)
+	pc, fn, line, _ := runtime.Caller(1)
+
+	pterm.Error.Println(runtime.FuncForPC(pc).Name(), fn, line, msgs)
 	return false
 }
 
