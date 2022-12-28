@@ -1,30 +1,62 @@
 package errnie
 
-// ErrType defines an enumerable type.
-type ErrType uint
+import "io"
+
+/*
+ErrorContext adds a strongly typed context to the error.
+*/
+type ErrorContext uint
 
 const (
-	PANIC ErrType = iota
-	FATAL
-	CRITICAL
-	ERROR
-	WARNING
-	INFO
-	DEBUG
+	// NIL represents no error was generated.
+	NIL ErrorContext = iota
+	// INTEGRITY represents a failure to verify the integrity of data.
+	INTEGRITY
+	// VALIDATION represents an error during validation of a value.
+	VALIDATION
+	// CONVERSION represents an error while converting a value type.
+	CONVERSION
+	// IOERROR represents a generic IO operation failure.
+	IOERROR
+	// UNKNOWN represents an error with unknown cause.
+	UNKNOWN
 )
 
 /*
-Error wraps Go's built in error type to extend its functionality with a
-severity level.
+Error is a custom wrapping around Go errors keeping errnie errors
+fully compatible with conventions.
 */
 type Error struct {
-	err     error
-	errType ErrType
+	presenter Presenter
+}
+
+type Presenter struct {
+	Level   string `json:"level"`
+	Message string `json:"message"`
 }
 
 /*
-ToString outputs the error message as it sits in the wrapperd Go error.
+NewError instantiates a new errnie Error and returns a pointer to it.
 */
-func (wrapper Error) ToString() string {
-	return wrapper.err.Error()
+func NewError(err error) error {
+	return err
+}
+
+/*
+Error implements the Go error interface by returning the error message.
+*/
+func (ee *Error) Error() string {
+	return ee.presenter.Message
+}
+
+/*
+IOError ...
+*/
+func IOError(err error) bool {
+	if err != nil && err != io.EOF {
+		Handles(err)
+		return true
+	}
+
+	return false
 }
