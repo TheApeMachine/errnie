@@ -50,7 +50,19 @@ func (ee *Error) Error() string {
 }
 
 /*
-IOError ...
+IOError is a specialized error wrapper for IO related errors.
+
+It handles situations where EOF errors should be treated as nil.
+By returning a boolean value it can be nicely composed within
+if statements as per the example below.
+
+```
+
+	if err := SomeIOTask(); errnie.IOError(err) {
+		return err
+	}
+
+```
 */
 func IOError(err error) bool {
 	if err != nil && err != io.EOF {
