@@ -1,6 +1,6 @@
-module github.com/theapemachine/errnie
+module github.com/theapemachine/errnie/v3
 
-go 1.19
+go 1.23.0
 
 require (
 	github.com/charmbracelet/lipgloss v0.10.0
