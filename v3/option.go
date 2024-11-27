@@ -1,4 +1,4 @@
-package errnie
+package v3
 
 /*
 Result is a function type that operates on a receiver and returns an error.
