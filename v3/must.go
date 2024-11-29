@@ -48,17 +48,39 @@ This function is used to safely execute a function that may return an error. If 
 or if the function panics, SafeMust will recover and log the panic instead of crashing the program.
 This can be useful for non-critical operations where you want the program to continue running.
 
+The optional fallbacks parameter allows you to provide custom recovery functions that will be
+executed in order if a panic occurs. Each fallback function receives the panic value as its argument,
+allowing for custom error handling or cleanup operations before the default warning is logged.
+
 Example usage:
 
 	result := SafeMust(func() (int, error) {
 		return someComputation()
 	})
 	fmt.Println(result)
+
+	// With custom fallback handlers
+	result := SafeMust(
+		func() (int, error) {
+			return someComputation()
+		},
+		func(p interface{}) {
+			cleanup()
+		},
+		func(p interface{}) {
+			metrics.RecordPanic(p)
+		},
+	)
 */
-func SafeMust[T any](fn func() (T, error)) T {
+func SafeMust[T any](fn func() (T, error), fallbacks ...func(interface{})) T {
 	defer func() {
 		if r := recover(); r != nil {
-			Log("Recovered from panic in SafeMust: %v", r)
+			if len(fallbacks) != 0 {
+				for _, rec := range fallbacks {
+					rec(r)
+				}
+			}
+			Warn("Recovered from panic in SafeMust: %v", r)
 		}
 	}()
 	return Must(fn())
