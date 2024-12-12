@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/acarl005/stripansi"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/davecgh/go-spew/spew"
@@ -84,24 +85,23 @@ Handles any errors during initialization gracefully.
 func initLogFile() {
 	wd, err := os.Getwd()
 	if err != nil {
-		fmt.Printf("Failed to get working directory: %v\n", err)
+		logger.Warn("Failed to get working directory", "error", err)
 		return
 	}
 
 	logDir := filepath.Join(wd, "logs")
 	if err := os.MkdirAll(logDir, 0755); err != nil {
-		fmt.Printf("Failed to create log directory: %v\n", err)
+		logger.Warn("Failed to create log directory", "error", err)
 		return
 	}
 
 	logFilePath := filepath.Join(logDir, "amsh.log")
 	logFile, err = os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
-		fmt.Printf("Failed to open log file: %v\n", err)
+		logger.Warn("Failed to open log file", "error", err)
 		return
 	}
-
-	fmt.Printf("Log file successfully initialized: %s\n", logFilePath)
+	logger.Debug("Log file successfully initialized", "path", logFilePath)
 }
 
 /*
@@ -117,13 +117,15 @@ func Log(format string, v ...interface{}) {
 
 /*
 Raw is a full decomposition of the object passed in.
+It will print the object into the console using spew, and it will write the object to the logfile.
 */
 func Raw(v ...interface{}) {
+	formatted := spew.Sdump(v...)
 	if os.Getenv("NOCONSOLE") != "true" {
 		spew.Dump(v...)
 	}
 
-	writeToLog(spew.Sprint(v...))
+	writeToLog(formatted)
 }
 
 /*
@@ -185,15 +187,37 @@ func Error(err error, v ...interface{}) error {
 		return nil
 	}
 
-	message := fmt.Sprintf("%s\n%s", err.Error(), getStackTrace())
-	message += "\n" + getCodeSnippet(err.Error(), 0, 10)
+	errMsg := err.Error()
+	var parts []string
+	parts = append(parts, errMsg)
+
+	if os.Getenv("NOSTACK") != "true" {
+		trace := getStackTrace()
+		parts = append(parts, trace)
+	}
+
+	if os.Getenv("NOSNIPPET") != "true" {
+		snippet := getCodeSnippet(errMsg, 0, 10)
+
+		if snippet != "" {
+			parts = append(parts, snippet)
+		}
+	}
+
+	message := strings.Join(parts, "\n")
+	fmt.Printf("Final message parts: %d\n", len(parts))
 
 	if os.Getenv("NOCONSOLE") != "true" {
 		logger.Error(message, v...)
 	}
 
 	writeToLog(message)
-	return err
+
+	if os.Getenv("NOSTACK") == "true" {
+		return fmt.Errorf("%s", errMsg)
+	}
+
+	return fmt.Errorf("%s", message)
 }
 
 /*
@@ -207,18 +231,17 @@ func writeToLog(message string) {
 	logFileMu.Lock()
 	defer logFileMu.Unlock()
 
-	// Strip ANSI escape codes and add a timestamp
-	// formattedMessage := fmt.Sprintf("[%s] %s\n", time.Now().Format("15:04:05"), stripansi.Strip(strings.TrimSpace(message)))
-	formattedMessage := fmt.Sprintf("[%s] %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(message))
+    // Strip ANSI escape codes and add a timestamp
+	formattedMessage := fmt.Sprintf("[%s] %s\n", time.Now().Format("15:04:05"), stripansi.Strip(strings.TrimSpace(message)))
 
 	_, err := logFile.WriteString(formattedMessage)
 	if err != nil {
-		fmt.Printf("Failed to write to log file: %v\n", err)
+		logger.Warn("Failed to write to log file", "error", err)
 	}
 
 	// Ensure the write is flushed to disk
 	if err := logFile.Sync(); err != nil {
-		fmt.Printf("Failed to sync log file: %v\n", err)
+		logger.Warn("Failed to sync log file", "error", err)
 	}
 }
 
@@ -261,6 +284,7 @@ Retrieve and return a code snippet surrounding the given line in the provided fi
 func getCodeSnippet(file string, line, radius int) string {
 	fileHandle, err := os.Open(file)
 	if err != nil {
+		logger.Warn("Failed to open file for code snippet", "file", file, "error", err)
 		return ""
 	}
 	defer fileHandle.Close()
@@ -281,6 +305,7 @@ func getCodeSnippet(file string, line, radius int) string {
 	}
 
 	if err := scanner.Err(); err != nil {
+		logger.Warn("Failed to read from code snippet file", "file", file, "error", err)
 		return ""
 	}
 
