@@ -2,6 +2,7 @@ package errnie
 
 import (
 	"errors"
+	"io"
 )
 
 /*
@@ -17,10 +18,11 @@ Example usage:
 	fmt.Println(value) // This will only execute if no error occurs.
 */
 func Must[T any](value T, err error) T {
-	if err != nil {
+	if err != nil && err != io.EOF {
 		Error(err)
 		panic(err)
 	}
+
 	return value
 }
 
@@ -35,7 +37,7 @@ Example usage:
 	MustVoid(someFuncThatReturnsOnlyError())
 */
 func MustVoid(err error) {
-	if err != nil {
+	if err != nil && err != io.EOF {
 		Error(err)
 		panic(err)
 	}
@@ -83,6 +85,7 @@ func SafeMust[T any](fn func() (T, error), fallbacks ...func(interface{})) T {
 			Warn("Recovered from panic in SafeMust: %v", r)
 		}
 	}()
+
 	return Must(fn())
 }
 
@@ -104,10 +107,12 @@ func SafeMustVoid(fn func() error) {
 		Error(errors.New("SafeMustVoid called with nil function"))
 		panic("SafeMustVoid called with nil function")
 	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			Log("Recovered from panic in SafeMustVoid: %v", r)
 		}
 	}()
+
 	MustVoid(fn())
 }
