@@ -173,6 +173,22 @@ func Warn(format string, v ...interface{}) {
 }
 
 /*
+ErrorSafe logs a simple version of the error, used in SafeMust.
+*/
+func ErrorSafe(err error, v ...interface{}) {
+	if err == nil {
+		return
+	}
+
+	if os.Getenv("NOCONSOLE") != "true" {
+		logger.Error(err.Error(), v...)
+	}
+
+	writeToLog(err.Error())
+
+}
+
+/*
 Error logs the error and returns it, useful for inline error logging and returning.
 
 Example usage:
@@ -194,18 +210,22 @@ func Error(err error, v ...interface{}) error {
 	if os.Getenv("NOSTACK") != "true" {
 		trace := getStackTrace()
 		parts = append(parts, trace)
-	}
 
-	if os.Getenv("NOSNIPPET") != "true" {
-		snippet := getCodeSnippet(errMsg, 0, 10)
+		// Get the first stack frame for the code snippet
+		if os.Getenv("NOSNIPPET") != "true" {
+			pc := make([]uintptr, 1)
+			runtime.Callers(2, pc)
+			frames := runtime.CallersFrames(pc)
+			frame, _ := frames.Next()
 
-		if snippet != "" {
-			parts = append(parts, snippet)
+			snippet := getCodeSnippet(frame.File, frame.Line, 5)
+			if snippet != "" {
+				parts = append(parts, "\n===[CODE SNIPPET]===\n"+snippet+"===[/CODE SNIPPET]===\n")
+			}
 		}
 	}
 
 	message := strings.Join(parts, "\n")
-	fmt.Printf("Final message parts: %d\n", len(parts))
 
 	if os.Getenv("NOCONSOLE") != "true" {
 		logger.Error(message, v...)
@@ -231,7 +251,7 @@ func writeToLog(message string) {
 	logFileMu.Lock()
 	defer logFileMu.Unlock()
 
-    // Strip ANSI escape codes and add a timestamp
+	// Strip ANSI escape codes and add a timestamp
 	formattedMessage := fmt.Sprintf("[%s] %s\n", time.Now().Format("15:04:05"), stripansi.Strip(strings.TrimSpace(message)))
 
 	_, err := logFile.WriteString(formattedMessage)
@@ -282,6 +302,10 @@ func getStackTrace() string {
 Retrieve and return a code snippet surrounding the given line in the provided file.
 */
 func getCodeSnippet(file string, line, radius int) string {
+	if file == "" {
+		return ""
+	}
+
 	fileHandle, err := os.Open(file)
 	if err != nil {
 		logger.Warn("Failed to open file for code snippet", "file", file, "error", err)

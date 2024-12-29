@@ -75,6 +75,11 @@ Example usage:
 	)
 */
 func SafeMust[T any](fn func() (T, error), fallbacks ...func(interface{})) T {
+	var (
+		value T
+		err   error
+	)
+
 	defer func() {
 		if r := recover(); r != nil {
 			if len(fallbacks) != 0 {
@@ -82,11 +87,16 @@ func SafeMust[T any](fn func() (T, error), fallbacks ...func(interface{})) T {
 					rec(r)
 				}
 			}
-			Warn("Recovered from panic in SafeMust: %v", r)
+			Warn("Recovered: %v", r)
 		}
 	}()
 
-	return Must(fn())
+	if value, err = fn(); err != nil && err != io.EOF {
+		ErrorSafe(err, false)
+		panic(err)
+	}
+
+	return value
 }
 
 /*
