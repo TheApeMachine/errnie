@@ -211,16 +211,28 @@ func Error(err error, v ...interface{}) error {
 		trace := getStackTrace()
 		parts = append(parts, trace)
 
-		// Get the first stack frame for the code snippet
+		// Get the first non-errnie stack frame for the code snippet
 		if os.Getenv("NOSNIPPET") != "true" {
-			pc := make([]uintptr, 1)
-			runtime.Callers(2, pc)
-			frames := runtime.CallersFrames(pc)
-			frame, _ := frames.Next()
+			const maxFrames = 10 // Limit how far we look back
+			pc := make([]uintptr, maxFrames)
+			n := runtime.Callers(2, pc)
+			frames := runtime.CallersFrames(pc[:n])
 
-			snippet := getCodeSnippet(frame.File, frame.Line, 5)
-			if snippet != "" {
-				parts = append(parts, "\n===[CODE SNIPPET]===\n"+snippet+"===[/CODE SNIPPET]===\n")
+			var frame runtime.Frame
+			more := true
+			// Skip frames until we find one outside the errnie package
+			for more {
+				frame, more = frames.Next()
+				if !strings.Contains(frame.Function, "errnie.") {
+					break
+				}
+			}
+
+			if frame.File != "" {
+				snippet := getCodeSnippet(frame.File, frame.Line, 5)
+				if snippet != "" {
+					parts = append(parts, "\n===[CODE SNIPPET]===\n"+snippet+"===[/CODE SNIPPET]===\n")
+				}
 			}
 		}
 	}
