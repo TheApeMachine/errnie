@@ -264,7 +264,7 @@ func writeToLog(message string) {
 	defer logFileMu.Unlock()
 
 	// Strip ANSI escape codes and add a timestamp
-	formattedMessage := fmt.Sprintf("%s", stripansi.Strip(strings.TrimSpace(message)))
+	formattedMessage := fmt.Sprintf("%s", stripansi.Strip(message))
 
 	_, err := logFile.WriteString(formattedMessage)
 	if err != nil {
