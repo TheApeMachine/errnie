@@ -142,34 +142,28 @@ func Trace(v ...interface{}) {
 /*
 Debug logs a debug message to the logger.
 */
-func Debug(format string, v ...interface{}) {
+func Debug(msg interface{}, keyvals ...interface{}) {
 	if os.Getenv("NOCONSOLE") != "true" {
-		logger.Debug(fmt.Sprintf(format, v...))
+		logger.Debug(msg, keyvals...)
 	}
-
-	writeToLog(fmt.Sprintf(format, v...))
 }
 
 /*
 Info logs an info message to the logger.
 */
-func Info(format string, v ...interface{}) {
+func Info(msg interface{}, keyvals ...interface{}) {
 	if os.Getenv("NOCONSOLE") != "true" {
-		logger.Info(fmt.Sprintf(format, v...))
+		logger.Info(msg, keyvals...)
 	}
-
-	writeToLog(fmt.Sprintf(format, v...))
 }
 
 /*
 Warn logs a warn message to the logger.
 */
-func Warn(format string, v ...interface{}) {
+func Warn(msg interface{}, keyvals ...interface{}) {
 	if os.Getenv("NOCONSOLE") != "true" {
-		logger.Warn(fmt.Sprintf(format, v...))
+		logger.Warn(msg, keyvals...)
 	}
-
-	writeToLog(fmt.Sprintf(format, v...))
 }
 
 /*
@@ -198,58 +192,16 @@ Example usage:
 		return Error(err, "additional context")
 	}
 */
-func Error(err error, v ...interface{}) error {
+func Error(err error, keyvals ...interface{}) error {
 	if err == nil {
 		return nil
 	}
 
-	errMsg := err.Error()
-	var parts []string
-	parts = append(parts, errMsg)
-
-	if os.Getenv("NOSTACK") != "true" {
-		trace := getStackTrace()
-		parts = append(parts, trace)
-
-		// Get the first non-errnie stack frame for the code snippet
-		if os.Getenv("NOSNIPPET") != "true" {
-			const maxFrames = 10 // Limit how far we look back
-			pc := make([]uintptr, maxFrames)
-			n := runtime.Callers(2, pc)
-			frames := runtime.CallersFrames(pc[:n])
-
-			var frame runtime.Frame
-			more := true
-			// Skip frames until we find one outside the errnie package
-			for more {
-				frame, more = frames.Next()
-				if !strings.Contains(frame.Function, "errnie.") {
-					break
-				}
-			}
-
-			if frame.File != "" {
-				snippet := getCodeSnippet(frame.File, frame.Line, 5)
-				if snippet != "" {
-					parts = append(parts, "\n===[CODE SNIPPET]===\n"+snippet+"===[/CODE SNIPPET]===\n")
-				}
-			}
-		}
-	}
-
-	message := strings.Join(parts, "\n")
-
 	if os.Getenv("NOCONSOLE") != "true" {
-		logger.Error(message, v...)
+		logger.Error(err, keyvals...)
 	}
 
-	writeToLog(message)
-
-	if os.Getenv("NOSTACK") == "true" {
-		return fmt.Errorf("%s", errMsg)
-	}
-
-	return fmt.Errorf("%s", message)
+	return err
 }
 
 /*
