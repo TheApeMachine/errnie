@@ -11,6 +11,13 @@ type Result[T any] struct {
 }
 
 /*
+Do is similar to Does, but it returns only the error.
+*/
+func Do(fn func() error) error {
+	return fn()
+}
+
+/*
 Does runs fn immediately and wraps its return value and error in a Result.
 Use Value and Err to read the outcome, or Or to run a handler when fn failed.
 

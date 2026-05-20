@@ -124,8 +124,8 @@ if err := result.Err(); err != nil {
 return greet(result.Value())
 ```
 
-| Method   | Purpose                                      |
-|----------|----------------------------------------------|
+| Method    | Purpose                                     |
+|-----------|---------------------------------------------|
 | `Value()` | Returns the value from `fn`                 |
 | `Err()`   | Returns the error from `fn`, or `nil`       |
 | `Or(fn)`  | Calls `fn(err)` only on failure; chainable  |
