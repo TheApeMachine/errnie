@@ -6,8 +6,9 @@ via mapstructure tags (for example with Viper). Pass a populated Config to Apply
 after configuration is loaded.
 */
 type Config struct {
-	Level string `mapstructure:"level"`
-	File  struct {
+	Level         string `mapstructure:"level"`
+	DisableCaller bool   `mapstructure:"disable_caller"`
+	File          struct {
 		Active bool   `mapstructure:"active"`
 		Path   string `mapstructure:"path"`
 	} `mapstructure:"file"`

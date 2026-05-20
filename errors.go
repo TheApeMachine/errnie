@@ -3,7 +3,6 @@ package errnie
 import (
 	"context"
 	"errors"
-	"fmt"
 )
 
 /*
@@ -153,7 +152,7 @@ func (err *ErrnieError) Error() string {
 	}
 
 	if err.Op != "" {
-		return fmt.Sprintf("%s: %s", err.Op, message)
+		return err.Op + ": " + message
 	}
 
 	return message

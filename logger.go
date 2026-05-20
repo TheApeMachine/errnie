@@ -33,11 +33,23 @@ and Elasticsearch sinks via buildWriter.
 func Apply(cfg *Config) {
 	log.DefaultLogger = log.Logger{
 		Level:      parseLogLevel(cfg.Level),
-		Caller:     1,
+		Caller:     loggerCaller(cfg),
 		TimeField:  "date",
 		TimeFormat: "2006-01-02 15:04:05",
 		Writer:     buildWriter(cfg),
 	}
+}
+
+/*
+loggerCaller returns the phuslu/log caller skip depth. Set disable_caller in
+Config to skip runtime.Caller on hot logging paths.
+*/
+func loggerCaller(cfg *Config) int {
+	if cfg != nil && cfg.DisableCaller {
+		return 0
+	}
+
+	return 1
 }
 
 /*

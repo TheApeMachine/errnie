@@ -1,13 +1,16 @@
 package errnie
 
-import "sync"
+import (
+	"sync"
+	"sync/atomic"
+)
 
 /*
-LogController controls errnie logger emission.
+LogController controls errnie logger emission. Suppression depth is tracked with
+atomics so the read path used by every log call avoids mutex contention.
 */
 type LogController struct {
-	lock       sync.Mutex
-	suppressed int
+	suppressed atomic.Int32
 }
 
 var defaultLogController = &LogController{}
@@ -28,22 +31,17 @@ func (controller *LogController) Suppress() func() {
 		return func() {}
 	}
 
-	controller.lock.Lock()
-	controller.suppressed++
-	controller.lock.Unlock()
+	controller.suppressed.Add(1)
 
 	var once sync.Once
 
 	return func() {
 		once.Do(func() {
-			controller.lock.Lock()
-			defer controller.lock.Unlock()
-
-			if controller.suppressed == 0 {
+			if controller.suppressed.Load() == 0 {
 				return
 			}
 
-			controller.suppressed--
+			controller.suppressed.Add(-1)
 		})
 	}
 }
@@ -56,10 +54,7 @@ func (controller *LogController) Suppressed() bool {
 		return false
 	}
 
-	controller.lock.Lock()
-	defer controller.lock.Unlock()
-
-	return controller.suppressed > 0
+	return controller.suppressed.Load() > 0
 }
 
 /*
@@ -67,5 +62,5 @@ loggingSuppressed reports whether the package-level log controller has disabled
 emission. Used by Error, Warn, Info, Debug, and Trace before writing.
 */
 func loggingSuppressed() bool {
-	return defaultLogController.Suppressed()
+	return defaultLogController.suppressed.Load() > 0
 }
