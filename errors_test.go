@@ -94,8 +94,7 @@ func TestErrnieErrorWith(t *testing.T) {
 
 			Convey("Then it should attach fields and return the same error", func() {
 				So(same, ShouldEqual, err)
-				So(err.Fields()["status"], ShouldEqual, 500)
-				So(err.Fields()["url"], ShouldEqual, "https://example.com")
+				So(err.Fields(), ShouldResemble, []any{"status", 500, "url", "https://example.com"})
 			})
 		})
 	})
@@ -167,6 +166,23 @@ func TestErrnieErrorError(t *testing.T) {
 
 			Convey("Then it should fall back to the cause message", func() {
 				So(text, ShouldEqual, "db.query: underlying")
+			})
+		})
+	})
+
+	Convey("Given an ErrnieError with a cached message", t, func() {
+		err := E(Validation, "invalid email", nil)
+
+		Convey("When Error is called twice and Operation mutates Op", func() {
+			first := err.Error()
+			second := err.Error()
+			err.Operation("user.create")
+			third := err.Error()
+
+			Convey("Then cached text should update after Operation", func() {
+				So(first, ShouldEqual, "invalid email")
+				So(second, ShouldEqual, first)
+				So(third, ShouldEqual, "user.create: invalid email")
 			})
 		})
 	})
@@ -251,6 +267,10 @@ func TestCombine(t *testing.T) {
 			Convey("Then both errors should be matchable", func() {
 				So(errors.Is(err, first), ShouldBeTrue)
 				So(IsIO(err), ShouldBeTrue)
+			})
+
+			Convey("Then Error should join messages with a newline", func() {
+				So(err.Error(), ShouldEqual, "first\nclose failed")
 			})
 		})
 	})

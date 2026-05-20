@@ -61,13 +61,17 @@ ErrnieError is the canonical typed error for errnie-aware projects. Use Kind
 for semantic classification, Message for human-readable detail, Cause for
 wrapping, and With for structured metadata. ErrnieError supports errors.Is
 and errors.As through Unwrap; it does not capture stack traces.
+
+Construct and enrich an ErrnieError (E, Operation, With) before sharing it
+across goroutines. Mutation after concurrent use is not safe.
 */
 type ErrnieError struct {
-	Kind    Kind
-	Op      string
-	Message string
-	Cause   error
-	fields  map[string]any
+	Kind     Kind
+	Op       string
+	Message  string
+	Cause    error
+	fields   []any
+	rendered string
 }
 
 /*
@@ -93,13 +97,14 @@ func (err *ErrnieError) Operation(name string) *ErrnieError {
 	}
 
 	err.Op = name
+	err.rendered = ""
 
 	return err
 }
 
 /*
 With attaches structured key/value metadata to the error. Keys must be strings;
-values are stored in a map allocated on first use.
+values are stored in a flat alternating slice to avoid map allocation and hashing.
 */
 func (err *ErrnieError) With(keysAndValues ...any) *ErrnieError {
 	if err == nil || len(keysAndValues) == 0 {
@@ -112,21 +117,33 @@ func (err *ErrnieError) With(keysAndValues ...any) *ErrnieError {
 			continue
 		}
 
-		if err.fields == nil {
-			err.fields = make(map[string]any, len(keysAndValues)/2)
+		value := keysAndValues[index+1]
+		replaced := false
+
+		for fieldIndex := 0; fieldIndex+1 < len(err.fields); fieldIndex += 2 {
+			existingKey, ok := err.fields[fieldIndex].(string)
+			if ok && existingKey == key {
+				err.fields[fieldIndex+1] = value
+				replaced = true
+
+				break
+			}
 		}
 
-		err.fields[key] = keysAndValues[index+1]
+		if !replaced {
+			err.fields = append(err.fields, key, value)
+		}
 	}
 
 	return err
 }
 
 /*
-Fields returns the metadata map attached via With, or nil when none was added.
-The returned map must be treated as read-only.
+Fields returns the metadata slice attached via With as alternating key/value
+pairs, or nil when none was added. The returned slice must be treated as
+read-only.
 */
-func (err *ErrnieError) Fields() map[string]any {
+func (err *ErrnieError) Fields() []any {
 	if err == nil {
 		return nil
 	}
@@ -142,6 +159,10 @@ func (err *ErrnieError) Error() string {
 		return ""
 	}
 
+	if err.rendered != "" {
+		return err.rendered
+	}
+
 	message := err.Message
 	if message == "" && err.Cause != nil {
 		message = err.Cause.Error()
@@ -152,10 +173,12 @@ func (err *ErrnieError) Error() string {
 	}
 
 	if err.Op != "" {
-		return err.Op + ": " + message
+		err.rendered = err.Op + ": " + message
+	} else {
+		err.rendered = message
 	}
 
-	return message
+	return err.rendered
 }
 
 /*
@@ -170,34 +193,124 @@ func (err *ErrnieError) Unwrap() error {
 }
 
 /*
-Combine joins non-nil errors using errors.Join. Returns nil when every error
-is nil. Use for cleanup, shutdown, and concurrent work that may fail in
-multiple places at once.
+joinedPair joins exactly two errors without errors.Join slice allocation.
+It implements Unwrap() []error for errors.Is and errors.As traversal.
+*/
+type joinedPair struct {
+	unwrapped [2]error
+}
+
+func joinPair(first, second error) joinedPair {
+	return joinedPair{unwrapped: [2]error{first, second}}
+}
+
+func (joined joinedPair) Error() string {
+	return joined.unwrapped[0].Error() + "\n" + joined.unwrapped[1].Error()
+}
+
+func (joined joinedPair) Unwrap() []error {
+	return joined.unwrapped[:]
+}
+
+/*
+Combine joins non-nil errors. Returns nil when every error is nil. The common
+two-error cleanup path uses a specialized joinPair; three or more fall back to
+errors.Join.
 */
 func Combine(errs ...error) error {
-	return errors.Join(errs...)
+	var first, second error
+	count := 0
+	var extra []error
+
+	for _, err := range errs {
+		if err == nil {
+			continue
+		}
+
+		switch count {
+		case 0:
+			first = err
+		case 1:
+			second = err
+		default:
+			if extra == nil {
+				extra = make([]error, 0, len(errs))
+				extra = append(extra, first, second)
+			}
+
+			extra = append(extra, err)
+		}
+
+		count++
+	}
+
+	switch count {
+	case 0:
+		return nil
+	case 1:
+		return first
+	case 2:
+		return joinPair(first, second)
+	default:
+		return errors.Join(extra...)
+	}
 }
 
 /*
 AsErrnie reports whether err matches or wraps an ErrnieError.
 */
 func AsErrnie(err error) (*ErrnieError, bool) {
-	var target *ErrnieError
-
-	if errors.As(err, &target) {
-		return target, true
-	}
-
-	return nil, false
+	return asErrnieInChain(err)
 }
 
 /*
 IsKind reports whether err matches or wraps an ErrnieError with the given kind.
 */
 func IsKind(err error, kind Kind) bool {
-	target, ok := AsErrnie(err)
+	for err != nil {
+		if target, ok := err.(*ErrnieError); ok {
+			return target.Kind == kind
+		}
 
-	return ok && target.Kind == kind
+		if joined, ok := err.(interface{ Unwrap() []error }); ok {
+			for _, child := range joined.Unwrap() {
+				if IsKind(child, kind) {
+					return true
+				}
+			}
+
+			return false
+		}
+
+		err = errors.Unwrap(err)
+	}
+
+	return false
+}
+
+/*
+asErrnieInChain walks an error chain without errors.As reflection.
+*/
+func asErrnieInChain(err error) (*ErrnieError, bool) {
+	for err != nil {
+		if target, ok := err.(*ErrnieError); ok {
+			return target, true
+		}
+
+		if joined, ok := err.(interface{ Unwrap() []error }); ok {
+			for _, child := range joined.Unwrap() {
+				if target, ok := asErrnieInChain(child); ok {
+					return target, true
+				}
+			}
+
+			return nil, false
+		}
+
+		err = errors.Unwrap(err)
+	}
+
+	return nil, false
 }
 
 /*

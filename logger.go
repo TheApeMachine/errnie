@@ -103,20 +103,24 @@ parseLogLevel maps a configuration string to a phuslu/log level. Empty or
 unknown values default to info.
 */
 func parseLogLevel(level string) log.Level {
-	switch strings.ToLower(strings.TrimSpace(level)) {
-	case "trace":
-		return log.TraceLevel
-	case "debug":
-		return log.DebugLevel
-	case "info", "":
+	level = strings.TrimSpace(level)
+
+	switch {
+	case level == "":
 		return log.InfoLevel
-	case "warn", "warning":
+	case strings.EqualFold(level, "trace"):
+		return log.TraceLevel
+	case strings.EqualFold(level, "debug"):
+		return log.DebugLevel
+	case strings.EqualFold(level, "info"):
+		return log.InfoLevel
+	case strings.EqualFold(level, "warn"), strings.EqualFold(level, "warning"):
 		return log.WarnLevel
-	case "error":
+	case strings.EqualFold(level, "error"):
 		return log.ErrorLevel
-	case "fatal":
+	case strings.EqualFold(level, "fatal"):
 		return log.FatalLevel
-	case "panic":
+	case strings.EqualFold(level, "panic"):
 		return log.PanicLevel
 	default:
 		return log.InfoLevel
@@ -170,7 +174,7 @@ Examples:
 */
 func Error(err error, fields ...any) error {
 	if err != nil && !loggingSuppressed() {
-		logger.handle.Error().Err(err).KeysAndValues(fields).Msg(err.Error())
+		logger.handle.Error().Err(err).KeysAndValues(fields).Msg("")
 	}
 
 	return err

@@ -175,13 +175,15 @@ Constructors and helpers:
 
 ```go
 errnie.E(kind, message, cause)          // wrap with kind + message
-errnie.Combine(errs...)               // nil-safe errors.Join
+errnie.Combine(errs...)               // nil-safe join; 2-error fast path
 errnie.AsErrnie(err)                    // extract typed error
 errnie.IsNotFound(err)                  // kind checks via errors.As
 errnie.IsContext(err)                   // context.Canceled / DeadlineExceeded
 ```
 
 `ErrnieError` supports `Unwrap()` for causal chains, optional `Operation("user.load")` metadata, and `With("key", value)` fields for observability. No stack traces by default — keep the hot path fast.
+
+Build and enrich errors with `E`, `Operation`, and `With` before sharing them across goroutines; concurrent mutation is not supported.
 
 Pair with `Does` for ergonomic side effects:
 
