@@ -1,5 +1,10 @@
 package errnie
 
+/*
+Config holds errnie logger settings, typically loaded from YAML or environment
+via mapstructure tags (for example with Viper). Pass a populated Config to Apply
+after configuration is loaded.
+*/
 type Config struct {
 	Level string `mapstructure:"level"`
 	File  struct {

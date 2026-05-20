@@ -62,6 +62,10 @@ func (controller *LogController) Suppressed() bool {
 	return controller.suppressed > 0
 }
 
+/*
+loggingSuppressed reports whether the package-level log controller has disabled
+emission. Used by Error, Warn, Info, Debug, and Trace before writing.
+*/
 func loggingSuppressed() bool {
 	return defaultLogController.Suppressed()
 }

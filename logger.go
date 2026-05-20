@@ -26,7 +26,9 @@ func init() {
 }
 
 /*
-Apply reconfigures the global errnie logger from ErrnieConfig (call after viper is loaded).
+Apply reconfigures the global errnie logger from Config. Call after Viper or
+another loader has populated cfg. Configures level, stdout, and optional file
+and Elasticsearch sinks via buildWriter.
 */
 func Apply(cfg *Config) {
 	log.DefaultLogger = log.Logger{
@@ -38,6 +40,11 @@ func Apply(cfg *Config) {
 	}
 }
 
+/*
+buildWriter assembles the log.Writer used by Apply. Always includes stdout;
+optionally adds a file writer and an async Elasticsearch indexer when enabled
+in cfg.
+*/
 func buildWriter(cfg *Config) log.Writer {
 	writers := make([]log.Writer, 0, 3)
 	writers = append(writers, log.IOWriter{Writer: os.Stdout})
@@ -79,6 +86,10 @@ func buildWriter(cfg *Config) log.Writer {
 	return &multi
 }
 
+/*
+parseLogLevel maps a configuration string to a phuslu/log level. Empty or
+unknown values default to info.
+*/
 func parseLogLevel(level string) log.Level {
 	switch strings.ToLower(strings.TrimSpace(level)) {
 	case "trace":

@@ -34,7 +34,7 @@ if cache == nil {
 }
 ```
 
-`errnie` trims that noise while staying idiomatic. No magic globals beyond an optional logger, no custom error types you have to learn, no reflection-heavy frameworks. Just helpers that compose with normal Go.
+`errnie` trims that noise while staying idiomatic. No magic globals beyond an optional logger, no reflection-heavy frameworks, and no parallel error hierarchy — just helpers that compose with normal Go, `errors.Is`, `errors.As`, and `errors.Join`.
 
 ---
 
@@ -134,6 +134,80 @@ The wrapper is effectively free on the hot path — zero allocations when you us
 
 ---
 
+### `ErrnieError` — one canonical typed error
+
+Instead of a zoo of `ValidationError`, `IOError`, and `HTTPError` types, errnie uses a single structured error with a `Kind` discriminator. Domain semantics (`NotFound`, `Unauthorized`, `Validation`) map cleanly across REST, gRPC, databases, and queues — translate to HTTP status codes at the boundary, not in core logic.
+
+```go
+return errnie.E(
+    errnie.Validation,
+    "email is invalid",
+    err,
+).With("field", "email")
+
+// classify anywhere in the stack
+if errnie.IsNotFound(err) {
+    ...
+}
+
+// works through wrapping
+var e *errnie.ErrnieError
+if errors.As(err, &e) {
+    switch e.Kind {
+    case errnie.NotFound:
+        ...
+    case errnie.Validation:
+        ...
+    }
+}
+```
+
+| Kind | Typical boundary mapping |
+|------|--------------------------|
+| `Validation` | 400 |
+| `Unauthorized` | 401 |
+| `Forbidden` | 403 |
+| `NotFound` | 404 |
+| `Conflict` | 409 |
+| `Timeout` | 408 / 504 |
+
+Constructors and helpers:
+
+```go
+errnie.E(kind, message, cause)          // wrap with kind + message
+errnie.Combine(errs...)               // nil-safe errors.Join
+errnie.AsErrnie(err)                    // extract typed error
+errnie.IsNotFound(err)                  // kind checks via errors.As
+errnie.IsContext(err)                   // context.Canceled / DeadlineExceeded
+```
+
+`ErrnieError` supports `Unwrap()` for causal chains, optional `Operation("user.load")` metadata, and `With("key", value)` fields for observability. No stack traces by default — keep the hot path fast.
+
+Pair with `Does` for ergonomic side effects:
+
+```go
+errnie.Does(func() (User, error) {
+    return repo.Find(id)
+}).Or(func(err error) {
+    if errnie.IsNotFound(err) {
+        errnie.Info("user absent", "id", id)
+        return
+    }
+    errnie.Error(err, "id", id)
+})
+```
+
+Cleanup and concurrent shutdown:
+
+```go
+return errnie.Combine(
+    tx.Rollback(),
+    conn.Close(),
+)
+```
+
+---
+
 ### `Require` — fail fast in constructors
 
 Validates required dependencies after options are applied. Catches the Go interface-nil trap (typed nil pointers in `any` slots) and reports missing names in stable sorted order.
@@ -184,6 +258,18 @@ elasticsearch:
 ```
 
 When multiple sinks are active, each log entry is written to all of them. Elasticsearch writes are async with a bounded buffer — if the queue fills, entries are discarded rather than blocking your app.
+
+**Elasticsearch performance**
+
+The sink uses the official [`go-elasticsearch`](https://github.com/elastic/go-elasticsearch) client with a [fasthttp](https://github.com/valyala/fasthttp) transport (same approach as the [official example](https://github.com/elastic/go-elasticsearch/blob/master/_examples/fasthttp/fasthttp.go)), tuned for log shipping:
+
+- **fasthttp transport** — pooled request/response buffers and lower allocation HTTP
+- **No retries** — failed log lines are not retried (avoids amplifying backpressure)
+- **Auto-drain responses** — connections return to the pool without reading full bodies on success
+- **Pooled request bodies** — `bytes.Reader` reuse per index call
+- **Async writer** — logging goroutines never block on Elasticsearch RTT
+
+For debugging client traffic during development, the go-elasticsearch [custom logger example](https://github.com/elastic/go-elasticsearch/blob/master/_examples/logging/custom.go) shows how to plug a transport logger into the underlying client — not recommended on production hot paths.
 
 Supported log levels: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `panic`.
 
@@ -240,13 +326,15 @@ go test ./...
 
 ## What's in the box
 
-| API                | Package        | Role                                      |
-|--------------- ----|----------------|-------------------------------------------|
-| `Error`, `Info`, … | `errnie`       | Structured logging with return-on-error   |
-| `Apply`, `Config`  | `errnie`       | Multi-sink logger configuration           |
-| `Does`, `Result`   | `errnie`       | Typed `(T, error)` wrapper                |
-| `Require`          | `errnie`       | Constructor dependency validation         |
-| `SuppressLogging`  | `errnie`       | Scoped log suppression                    |
+| API                | Package  | Role                                      |
+|--------------------|----------|-------------------------------------------|
+| `Error`, `Info`, … | `errnie` | Structured logging with return-on-error   |
+| `E`, `ErrnieError` | `errnie` | Canonical typed errors with `Kind`        |
+| `Combine`          | `errnie` | Nil-safe `errors.Join` helper             |
+| `Apply`, `Config`  | `errnie` | Multi-sink logger configuration           |
+| `Does`, `Result`   | `errnie` | Typed `(T, error)` wrapper                |
+| `Require`          | `errnie` | Constructor dependency validation         |
+| `SuppressLogging`  | `errnie` | Scoped log suppression                    |
 
 Built on [phuslu/log](https://github.com/phuslu/log) for fast, structured JSON logging.
 

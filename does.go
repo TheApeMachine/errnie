@@ -19,7 +19,11 @@ Example:
 	result := Does(func() (string, error) {
 		return fetchName(id)
 	}).Or(func(err error) {
-		Warn("fetch failed", "err", err)
+		if IsNotFound(err) {
+			Warn("not found", "id", id)
+			return
+		}
+		Error(err, "id", id)
 	})
 
 	if result.Err() != nil {
