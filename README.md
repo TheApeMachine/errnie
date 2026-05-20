@@ -296,10 +296,79 @@ _ = errnie.Error(fmt.Errorf("expected failure"))
 The `Does` / `Result` API is designed to disappear at compile time:
 
 ```
-BenchmarkDoes/success          ~0.3 ns/op    0 allocs/op
-BenchmarkResultOr/success      ~0.3 ns/op    0 allocs/op
-BenchmarkResultValue/success   ~0.3 ns/op    0 allocs/op
-BenchmarkResultErr/success     ~0.3 ns/op    0 allocs/op
+goos: darwin
+goarch: arm64
+pkg: github.com/theapemachine/errnie
+cpu: Apple M4 Max
+BenchmarkDoes/success-16                            	 1000000000	 0.6399 ns/op      0 B/op    0 allocs/op
+BenchmarkDoes/error-16                              	 1000000000	 0.6391 ns/op      0 B/op    0 allocs/op
+BenchmarkDoes/string_success-16                     	 1000000000	 0.7664 ns/op      0 B/op    0 allocs/op
+BenchmarkResultOr/success-16                        	 1000000000	 0.6417 ns/op      0 B/op    0 allocs/op
+BenchmarkResultOr/error-16                          	 1000000000	 0.9117 ns/op      0 B/op    0 allocs/op
+BenchmarkResultOr/chained_error-16                  	 716525034	  .550  ns/op	   0 B/op	 0 allocs/op
+BenchmarkResultValue/success-16                     	 1000000000	 0.5161 ns/op      0 B/op    0 allocs/op
+BenchmarkResultValue/error-16                       	 1000000000	 0.5193 ns/op      0 B/op    0 allocs/op
+BenchmarkResultValue/string_success-16              	 1000000000	 0.6460 ns/op      0 B/op    0 allocs/op
+BenchmarkResultErr/success-16                       	 1000000000	 0.6508 ns/op      0 B/op    0 allocs/op
+BenchmarkResultErr/error-16                         	 1000000000	 0.6515 ns/op      0 B/op    0 allocs/op
+BenchmarkResultErr/custom_error-16                  	 1000000000	 0.6589 ns/op      0 B/op    0 allocs/op
+BenchmarkNewElasticPostWriter/without_auth-16         	     125133	   9979 ns/op  22069 B/op  647 allocs/op
+BenchmarkNewElasticPostWriter/with_auth-16            	     121344	  10010 ns/op  22303 B/op  651 allocs/op
+BenchmarkElasticPostWriterWrite/empty_payload-16      	  436279089	  2.717 ns/op      0 B/op    0 allocs/op
+BenchmarkElasticPostWriterWrite/json_payload-16       	      38526	  30874 ns/op   5569 B/op   67 allocs/op
+BenchmarkE/without_cause-16                           	   60908037	  19.08 ns/op     96 B/op    1 allocs/op
+BenchmarkE/with_cause-16                              	   64959230	  18.91 ns/op     96 B/op    1 allocs/op
+BenchmarkErrnieErrorOperation-16                      	 1000000000	  1.026 ns/op      0 B/op    0 allocs/op
+BenchmarkErrnieErrorWith/two_fields-16                	  138482296	  8.643 ns/op      0 B/op    0 allocs/op
+BenchmarkErrnieErrorError-16                          	  931117060	  1.303 ns/op      0 B/op    0 allocs/op
+BenchmarkErrnieErrorUnwrap-16                         	 1000000000	 0.6540 ns/op      0 B/op    0 allocs/op
+BenchmarkCombine/all_nil-16                           	  395448062	  3.138 ns/op      0 B/op    0 allocs/op
+BenchmarkCombine/single_error-16                      	  292563076	  4.006 ns/op      0 B/op    0 allocs/op
+BenchmarkCombine/multiple_errors-16                   	   67949688	  17.27 ns/op     32 B/op    1 allocs/op
+BenchmarkAsErrnie-16                                  	  273330852	  4.368 ns/op      0 B/op    0 allocs/op
+BenchmarkIsKind-16                                    	  294363700	  4.067 ns/op      0 B/op    0 allocs/op
+BenchmarkIsNotFound-16                                	  273817381	  4.345 ns/op      0 B/op    0 allocs/op
+BenchmarkIsContext-16                                 	  181802181	  6.602 ns/op      0 B/op    0 allocs/op
+BenchmarkKindString-16                                	 1000000000	 0.9072 ns/op      0 B/op    0 allocs/op
+BenchmarkHotpathErrorReturn/nil_error-16              	  762642186	  1.571 ns/op      0 B/op    0 allocs/op
+BenchmarkHotpathErrorReturn/typed_error-16            	   10155147	  118.4 ns/op      0 B/op    0 allocs/op
+BenchmarkHotpathErrorReturn/suppressed_typed_error-16 	  555781771	  2.145 ns/op      0 B/op    0 allocs/op
+BenchmarkHotpathDoesReturn/success-16                 	  421653920	  2.845 ns/op      0 B/op    0 allocs/op
+BenchmarkHotpathDoesReturn/failure-16                 	 1000000000	  1.123 ns/op      0 B/op    0 allocs/op
+BenchmarkHotpathLoggingDisabledCaller/info-16         	    8210484	  144.5 ns/op     56 B/op    2 allocs/op
+BenchmarkHotpathLoggingSuppressedCheck/not_suppressed-16 1000000000	 0.6424 ns/op      0 B/op    0 allocs/op
+BenchmarkHotpathLoggingSuppressedCheck/suppressed-16     1000000000	 0.6405 ns/op     0 B/op	 0 allocs/op
+BenchmarkHotpathCombineCleanup-16                          68692951	  17.02 ns/op    32 B/op	 1 allocs/op
+BenchmarkApply-16                                          32264822	  37.83 ns/op    64 B/op	 2 allocs/op
+BenchmarkBuildWriter/stdout_only-16                        42158145	  28.20 ns/op    64 B/op	 2 allocs/op
+BenchmarkBuildWriter/stdout_and_file-16                    18574533	  62.62 ns/op   200 B/op	 4 allocs/op
+BenchmarkParseLogLevel/debug-16                           185859067	  6.418 ns/op     0 B/op	 0 allocs/op
+BenchmarkParseLogLevel/default-16                         100000000	  11.37 ns/op     0 B/op	 0 allocs/op
+BenchmarkNewLogger-16                                     155489390	  7.734 ns/op     8 B/op	 1 allocs/op
+BenchmarkError/nil_error-16                               776331172	  1.550 ns/op     0 B/op	 0 allocs/op
+BenchmarkError/non-nil_error-16                             7933128	  150.8 ns/op    56 B/op	 2 allocs/op
+BenchmarkError/suppressed_non-nil_error-16                556747665	  2.163 ns/op     0 B/op	 0 allocs/op
+BenchmarkWarn/enabled-16                                    8086954	  147.1 ns/op    56 B/op	 2 allocs/op
+BenchmarkWarn/suppressed-16                               724749097	  1.648 ns/op     0 B/op	 0 allocs/op
+BenchmarkInfo/enabled-16                                    8206581	  146.8 ns/op    56 B/op	 2 allocs/op
+BenchmarkInfo/suppressed-16                               721928270	  1.652 ns/op     0 B/op	 0 allocs/op
+BenchmarkDebug/enabled-16                                   8206884	  145.6 ns/op    56 B/op	 2 allocs/op
+BenchmarkDebug/suppressed-16                              730278855	  1.644 ns/op     0 B/op	 0 allocs/op
+BenchmarkTrace/enabled-16                                   8013890	  148.0 ns/op    56 B/op	 2 allocs/op
+BenchmarkTrace/suppressed-16                              720418563	  1.673 ns/op     0 B/op	 0 allocs/op
+BenchmarkSuppressLogging/suppress_and_restore-16           85586419	  13.88 ns/op    16 B/op	 1 allocs/op
+BenchmarkLogControllerSuppress/suppress_and_restore-16     89261080	  13.50 ns/op    16 B/op	 1 allocs/op
+BenchmarkLogControllerSuppressed/not_suppressed-16       1000000000	 0.6487 ns/op     0 B/op	 0 allocs/op
+BenchmarkLogControllerSuppressed/suppressed-16           1000000000	 0.8086 ns/op     0 B/op	 0 allocs/op
+BenchmarkLoggingSuppressed/not_suppressed-16             1000000000	 0.6473 ns/op     0 B/op	 0 allocs/op
+BenchmarkMissingDependency/absent_nil_interface-16        928865662	  1.307 ns/op     0 B/op	 0 allocs/op
+BenchmarkMissingDependency/absent_typed_nil_pointer-16    468857982	  2.160 ns/op     0 B/op	 0 allocs/op
+BenchmarkMissingDependency/present_pointer-16             530263695	  2.193 ns/op     0 B/op	 0 allocs/op
+BenchmarkRequire/success-16                                24744328	  49.57 ns/op     0 B/op	 0 allocs/op
+BenchmarkRequire/missing_dependency-16                     15565909	  77.38 ns/op    32 B/op	 2 allocs/op
+PASS
+coverage: 72.1% of statements
+ok  	github.com/theapemachine/errnie	81.056s
 ```
 
 Run them yourself:
