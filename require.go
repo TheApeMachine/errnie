@@ -25,7 +25,7 @@ func missingDependency(obj any) bool {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice, reflect.UnsafePointer:
 		return value.IsNil()
 	default:
-		return false
+		return value.IsZero()
 	}
 }
 

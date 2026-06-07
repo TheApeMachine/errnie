@@ -13,10 +13,14 @@ var logger *Logger
 
 var elasticsearchWriterWarn sync.Once
 
+// callerSkip is the phuslu/log runtime.Caller depth. Two frames sit above the
+// real call site: phuslu/log's level method and errnie's public wrapper.
+const callerSkip = 2
+
 func init() {
 	log.DefaultLogger = log.Logger{
 		Level:      log.InfoLevel,
-		Caller:     1,
+		Caller:     callerSkip,
 		TimeField:  "date",
 		TimeFormat: "2006-01-02 15:04:05",
 		Writer:     log.IOWriter{Writer: os.Stdout},
@@ -49,7 +53,7 @@ func loggerCaller(cfg *Config) int {
 		return 0
 	}
 
-	return 1
+	return callerSkip
 }
 
 /*

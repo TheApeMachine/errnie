@@ -24,7 +24,7 @@ func configureTestLogger(t *testing.T, level log.Level) *bytes.Buffer {
 
 	log.DefaultLogger = log.Logger{
 		Level:      level,
-		Caller:     1,
+		Caller:     callerSkip,
 		TimeField:  "date",
 		TimeFormat: "2006-01-02 15:04:05",
 		Writer:     log.IOWriter{Writer: &buffer},
@@ -143,6 +143,26 @@ func TestNewLogger(t *testing.T) {
 			Convey("Then it should wrap the default logger handle", func() {
 				So(instance, ShouldNotBeNil)
 				So(instance.handle, ShouldEqual, &log.DefaultLogger)
+			})
+		})
+	})
+}
+
+/*
+TestLoggerCaller verifies caller attribution skips errnie wrappers.
+*/
+func TestLoggerCaller(t *testing.T) {
+	Convey("Given logging with caller capture enabled", t, func() {
+		buffer := configureTestLogger(t, log.InfoLevel)
+
+		Convey("When Info is called from this test", func() {
+			Info("caller probe")
+
+			Convey("Then the caller should not point at errnie/logger.go", func() {
+				output := buffer.String()
+				So(output, ShouldContainSubstring, `"caller":`)
+				So(output, ShouldNotContainSubstring, "errnie/logger.go")
+				So(output, ShouldContainSubstring, "logger_test.go")
 			})
 		})
 	})
