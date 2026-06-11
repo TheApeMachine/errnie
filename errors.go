@@ -10,51 +10,21 @@ Kind classifies an ErrnieError using domain semantics that translate cleanly
 across REST, gRPC, databases, queues, and filesystems. Prefer NotFound over
 HTTP-specific codes; map transport status at the boundary layer.
 */
-type Kind uint8
+type Kind error
 
-const (
-	Unknown Kind = iota
-	Validation
-	IO
-	Network
-	HTTP
-	Database
-	Unauthorized
-	Forbidden
-	NotFound
-	Conflict
-	Timeout
+var (
+	Unknown      Kind = errors.New("unknown")
+	Validation   Kind = errors.New("validation")
+	IO           Kind = errors.New("io")
+	Network      Kind = errors.New("network")
+	HTTP         Kind = errors.New("http")
+	Database     Kind = errors.New("database")
+	Unauthorized Kind = errors.New("unauthorized")
+	Forbidden    Kind = errors.New("forbidden")
+	NotFound     Kind = errors.New("not_found")
+	Conflict     Kind = errors.New("conflict")
+	Timeout      Kind = errors.New("timeout")
 )
-
-/*
-String returns the stable name of a Kind for logging and display.
-*/
-func (kind Kind) String() string {
-	switch kind {
-	case Validation:
-		return "validation"
-	case IO:
-		return "io"
-	case Network:
-		return "network"
-	case HTTP:
-		return "http"
-	case Database:
-		return "database"
-	case Unauthorized:
-		return "unauthorized"
-	case Forbidden:
-		return "forbidden"
-	case NotFound:
-		return "not_found"
-	case Conflict:
-		return "conflict"
-	case Timeout:
-		return "timeout"
-	default:
-		return "unknown"
-	}
-}
 
 /*
 ErrnieError is the canonical typed error for errnie-aware projects. Use Kind
@@ -79,7 +49,7 @@ E constructs an ErrnieError with the given kind, message, and optional wrapped
 cause. Cause is preserved for errors.Is and errors.As, including
 context.Canceled and context.DeadlineExceeded when passed as cause.
 */
-func E(kind Kind, message string, cause error) *ErrnieError {
+func Err(kind Kind, message string, cause error) *ErrnieError {
 	return &ErrnieError{
 		Kind:    kind,
 		Message: message,
@@ -169,7 +139,7 @@ func (err *ErrnieError) Error() string {
 	}
 
 	if message == "" {
-		message = err.Kind.String()
+		message = err.Kind.Error()
 	}
 
 	if err.Op != "" {
