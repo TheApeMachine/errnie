@@ -36,12 +36,13 @@ Construct and enrich an ErrnieError (E, Operation, With) before sharing it
 across goroutines. Mutation after concurrent use is not safe.
 */
 type ErrnieError struct {
-	Kind     Kind
-	Op       string
-	Message  string
-	Cause    error
-	fields   []any
-	rendered string
+	Kind      Kind
+	Op        string
+	Message   string
+	Cause     error
+	Timestamp int64
+	fields    []any
+	rendered  string
 }
 
 /*
@@ -55,6 +56,27 @@ func Err(kind Kind, message string, cause error) *ErrnieError {
 		Message: message,
 		Cause:   cause,
 	}
+}
+
+/*
+Guard returns nil if the cause is nil, otherwise it returns
+an ErrnieError with the given kind, message, and cause.
+*/
+func Guard(kind Kind, message string, cause error) error {
+	if cause == nil {
+		return nil
+	}
+
+	return Err(kind, message, cause)
+}
+
+func (err *ErrnieError) WithTimestamp(timestamp int64) *ErrnieError {
+	if err == nil {
+		return nil
+	}
+
+	err.Timestamp = timestamp
+	return err
 }
 
 /*

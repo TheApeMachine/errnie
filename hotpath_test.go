@@ -15,7 +15,7 @@ BenchmarkHotpathErrorReturn measures the common log-and-return error path.
 */
 func BenchmarkHotpathErrorReturn(b *testing.B) {
 	configureBenchmarkLogger(b, log.ErrorLevel)
-	err := E(Validation, "invalid input", nil)
+	err := Err(Validation, "invalid input", nil)
 
 	b.Run("nil error", func(b *testing.B) {
 		for range b.N {
@@ -116,7 +116,7 @@ BenchmarkHotpathCombineCleanup measures shutdown-style error joining.
 */
 func BenchmarkHotpathCombineCleanup(b *testing.B) {
 	first := errors.New("close failed")
-	second := E(IO, "flush failed", errors.New("io"))
+	second := Err(IO, "flush failed", errors.New("io"))
 
 	for range b.N {
 		hotpathSink = Combine(first, second)

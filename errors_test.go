@@ -15,7 +15,7 @@ TestE verifies ErrnieError construction through E.
 func TestE(t *testing.T) {
 	Convey("Given a kind and message without a cause", t, func() {
 		Convey("When E is called", func() {
-			err := E(Validation, "email is invalid", nil)
+			err := Err(Validation, "email is invalid", nil)
 
 			Convey("Then it should return a typed error with the expected fields", func() {
 				So(err, ShouldNotBeNil)
@@ -30,7 +30,7 @@ func TestE(t *testing.T) {
 		cause := errors.New("read failed")
 
 		Convey("When E is called", func() {
-			err := E(IO, "load config", cause)
+			err := Err(IO, "load config", cause)
 
 			Convey("Then the cause should be preserved for Unwrap", func() {
 				So(err.Cause, ShouldEqual, cause)
@@ -41,7 +41,7 @@ func TestE(t *testing.T) {
 
 	Convey("Given a context cancellation cause", t, func() {
 		Convey("When E wraps context.Canceled", func() {
-			err := E(Timeout, "request cancelled", context.Canceled)
+			err := Err(Timeout, "request cancelled", context.Canceled)
 
 			Convey("Then context matching should still work through the chain", func() {
 				So(errors.Is(err, context.Canceled), ShouldBeTrue)
@@ -56,7 +56,7 @@ TestErrnieErrorOperation verifies operation metadata chaining.
 */
 func TestErrnieErrorOperation(t *testing.T) {
 	Convey("Given an ErrnieError from E", t, func() {
-		err := E(NotFound, "user missing", nil)
+		err := Err(NotFound, "user missing", nil)
 
 		Convey("When Operation is called", func() {
 			same := err.Operation("user.load")
@@ -87,7 +87,7 @@ TestErrnieErrorWith verifies structured metadata attachment.
 */
 func TestErrnieErrorWith(t *testing.T) {
 	Convey("Given an ErrnieError from E", t, func() {
-		err := E(HTTP, "request failed", nil)
+		err := Err(HTTP, "request failed", nil)
 
 		Convey("When With is called with key/value pairs", func() {
 			same := err.With("status", 500, "url", "https://example.com")
@@ -117,7 +117,7 @@ TestErrnieErrorFields verifies read access to metadata maps.
 */
 func TestErrnieErrorFields(t *testing.T) {
 	Convey("Given an ErrnieError without metadata", t, func() {
-		err := E(Unknown, "plain", nil)
+		err := Err(Unknown, "plain", nil)
 
 		Convey("When Fields is called", func() {
 			fields := err.Fields()
@@ -146,7 +146,7 @@ TestErrnieErrorError verifies the error string format.
 */
 func TestErrnieErrorError(t *testing.T) {
 	Convey("Given an ErrnieError with message only", t, func() {
-		err := E(Validation, "invalid email", nil)
+		err := Err(Validation, "invalid email", nil)
 
 		Convey("When Error is called", func() {
 			text := err.Error()
@@ -158,7 +158,7 @@ func TestErrnieErrorError(t *testing.T) {
 	})
 
 	Convey("Given an ErrnieError with operation and empty message", t, func() {
-		err := E(Unknown, "", errors.New("underlying"))
+		err := Err(Unknown, "", errors.New("underlying"))
 
 		Convey("When Error is called after Operation", func() {
 			err.Operation("db.query")
@@ -171,7 +171,7 @@ func TestErrnieErrorError(t *testing.T) {
 	})
 
 	Convey("Given an ErrnieError with a cached message", t, func() {
-		err := E(Validation, "invalid email", nil)
+		err := Err(Validation, "invalid email", nil)
 
 		Convey("When Error is called twice and Operation mutates Op", func() {
 			first := err.Error()
@@ -205,7 +205,7 @@ TestErrnieErrorUnwrap verifies wrapping support for errors.Is and errors.As.
 */
 func TestErrnieErrorUnwrap(t *testing.T) {
 	Convey("Given a wrapped ErrnieError chain", t, func() {
-		root := E(Validation, "invalid", errors.New("root"))
+		root := Err(Validation, "invalid", errors.New("root"))
 		wrapped := fmt.Errorf("outer: %w", root)
 
 		Convey("When errors.As is used", func() {
@@ -259,7 +259,7 @@ func TestCombine(t *testing.T) {
 
 	Convey("Given multiple non-nil errors", t, func() {
 		first := errors.New("first")
-		second := E(IO, "close failed", errors.New("second"))
+		second := Err(IO, "close failed", errors.New("second"))
 
 		Convey("When Combine is called", func() {
 			err := Combine(first, second)
@@ -281,7 +281,7 @@ TestAsErrnie verifies typed extraction from wrapped errors.
 */
 func TestAsErrnie(t *testing.T) {
 	Convey("Given a wrapped ErrnieError", t, func() {
-		inner := E(NotFound, "missing", nil)
+		inner := Err(NotFound, "missing", nil)
 		outer := fmt.Errorf("wrap: %w", inner)
 
 		Convey("When AsErrnie is called", func() {
@@ -311,7 +311,7 @@ TestIsKind verifies kind-based classification through wrapping.
 */
 func TestIsKind(t *testing.T) {
 	Convey("Given a wrapped ErrnieError", t, func() {
-		err := fmt.Errorf("wrap: %w", E(Conflict, "duplicate", nil))
+		err := fmt.Errorf("wrap: %w", Err(Conflict, "duplicate", nil))
 
 		Convey("When IsKind is called", func() {
 			Convey("Then it should match the expected kind", func() {
@@ -327,7 +327,7 @@ TestIsValidation verifies validation error classification.
 */
 func TestIsValidation(t *testing.T) {
 	Convey("Given a validation ErrnieError", t, func() {
-		err := E(Validation, "bad input", nil)
+		err := Err(Validation, "bad input", nil)
 
 		Convey("When IsValidation is called", func() {
 			Convey("Then it should match", func() {
@@ -343,7 +343,7 @@ TestIsIO verifies IO error classification.
 */
 func TestIsIO(t *testing.T) {
 	Convey("Given an IO ErrnieError", t, func() {
-		err := E(IO, "read failed", nil)
+		err := Err(IO, "read failed", nil)
 
 		Convey("When IsIO is called", func() {
 			So(IsIO(err), ShouldBeTrue)
@@ -356,7 +356,7 @@ TestIsNetwork verifies network error classification.
 */
 func TestIsNetwork(t *testing.T) {
 	Convey("Given a network ErrnieError", t, func() {
-		err := E(Network, "dial failed", nil)
+		err := Err(Network, "dial failed", nil)
 
 		Convey("When IsNetwork is called", func() {
 			So(IsNetwork(err), ShouldBeTrue)
@@ -369,7 +369,7 @@ TestIsHTTP verifies HTTP error classification.
 */
 func TestIsHTTP(t *testing.T) {
 	Convey("Given an HTTP ErrnieError", t, func() {
-		err := E(HTTP, "bad response", nil)
+		err := Err(HTTP, "bad response", nil)
 
 		Convey("When IsHTTP is called", func() {
 			So(IsHTTP(err), ShouldBeTrue)
@@ -382,7 +382,7 @@ TestIsDatabase verifies database error classification.
 */
 func TestIsDatabase(t *testing.T) {
 	Convey("Given a database ErrnieError", t, func() {
-		err := E(Database, "query failed", nil)
+		err := Err(Database, "query failed", nil)
 
 		Convey("When IsDatabase is called", func() {
 			So(IsDatabase(err), ShouldBeTrue)
@@ -395,7 +395,7 @@ TestIsUnauthorized verifies unauthorized error classification.
 */
 func TestIsUnauthorized(t *testing.T) {
 	Convey("Given an unauthorized ErrnieError", t, func() {
-		err := E(Unauthorized, "login required", nil)
+		err := Err(Unauthorized, "login required", nil)
 
 		Convey("When IsUnauthorized is called", func() {
 			So(IsUnauthorized(err), ShouldBeTrue)
@@ -408,7 +408,7 @@ TestIsForbidden verifies forbidden error classification.
 */
 func TestIsForbidden(t *testing.T) {
 	Convey("Given a forbidden ErrnieError", t, func() {
-		err := E(Forbidden, "access denied", nil)
+		err := Err(Forbidden, "access denied", nil)
 
 		Convey("When IsForbidden is called", func() {
 			So(IsForbidden(err), ShouldBeTrue)
@@ -421,7 +421,7 @@ TestIsNotFound verifies not-found error classification.
 */
 func TestIsNotFound(t *testing.T) {
 	Convey("Given a not-found ErrnieError", t, func() {
-		err := E(NotFound, "missing", nil)
+		err := Err(NotFound, "missing", nil)
 
 		Convey("When IsNotFound is called", func() {
 			So(IsNotFound(err), ShouldBeTrue)
@@ -434,7 +434,7 @@ TestIsConflict verifies conflict error classification.
 */
 func TestIsConflict(t *testing.T) {
 	Convey("Given a conflict ErrnieError", t, func() {
-		err := E(Conflict, "duplicate", nil)
+		err := Err(Conflict, "duplicate", nil)
 
 		Convey("When IsConflict is called", func() {
 			So(IsConflict(err), ShouldBeTrue)
@@ -447,7 +447,7 @@ TestIsTimeout verifies timeout error classification.
 */
 func TestIsTimeout(t *testing.T) {
 	Convey("Given a timeout ErrnieError", t, func() {
-		err := E(Timeout, "deadline exceeded", context.DeadlineExceeded)
+		err := Err(Timeout, "deadline exceeded", context.DeadlineExceeded)
 
 		Convey("When IsTimeout is called", func() {
 			So(IsTimeout(err), ShouldBeTrue)
@@ -461,7 +461,7 @@ TestIsContext verifies context cancellation and deadline detection.
 */
 func TestIsContext(t *testing.T) {
 	Convey("Given a wrapped context.Canceled error", t, func() {
-		err := E(Timeout, "cancelled", context.Canceled)
+		err := Err(Timeout, "cancelled", context.Canceled)
 
 		Convey("When IsContext is called", func() {
 			So(IsContext(err), ShouldBeTrue)
@@ -469,7 +469,7 @@ func TestIsContext(t *testing.T) {
 	})
 
 	Convey("Given a non-context error", t, func() {
-		err := E(Validation, "bad", nil)
+		err := Err(Validation, "bad", nil)
 
 		Convey("When IsContext is called", func() {
 			So(IsContext(err), ShouldBeFalse)
@@ -499,7 +499,7 @@ func TestKindString(t *testing.T) {
 		Convey("When String is called", func() {
 			Convey("Then it should return the expected name", func() {
 				for kind, name := range cases {
-					So(kind.String(), ShouldEqual, name)
+					So(Kind(kind), ShouldEqual, name)
 				}
 			})
 		})
@@ -511,7 +511,7 @@ TestErrnieErrorWithDoes verifies ErrnieError integration with Does and Or.
 */
 func TestErrnieErrorWithDoes(t *testing.T) {
 	Convey("Given a function that returns an ErrnieError", t, func() {
-		expected := E(NotFound, "user missing", nil)
+		expected := Err(NotFound, "user missing", nil)
 
 		Convey("When Does and Or are used", func() {
 			var handled *ErrnieError
@@ -544,13 +544,13 @@ BenchmarkE measures ErrnieError construction with and without a cause.
 func BenchmarkE(b *testing.B) {
 	b.Run("without cause", func(b *testing.B) {
 		for range b.N {
-			benchmarkErrnieSink = E(Validation, "invalid", nil)
+			benchmarkErrnieSink = Err(Validation, "invalid", nil)
 		}
 	})
 
 	b.Run("with cause", func(b *testing.B) {
 		for range b.N {
-			benchmarkErrnieSink = E(IO, "read failed", benchmarkStaticCause)
+			benchmarkErrnieSink = Err(IO, "read failed", benchmarkStaticCause)
 		}
 	})
 }
@@ -559,7 +559,7 @@ func BenchmarkE(b *testing.B) {
 BenchmarkErrnieErrorOperation measures Operation chaining.
 */
 func BenchmarkErrnieErrorOperation(b *testing.B) {
-	err := E(NotFound, "missing", nil)
+	err := Err(NotFound, "missing", nil)
 
 	b.ResetTimer()
 	for range b.N {
@@ -571,7 +571,7 @@ func BenchmarkErrnieErrorOperation(b *testing.B) {
 BenchmarkErrnieErrorWith measures metadata attachment.
 */
 func BenchmarkErrnieErrorWith(b *testing.B) {
-	err := E(HTTP, "request failed", nil)
+	err := Err(HTTP, "request failed", nil)
 
 	b.Run("two fields", func(b *testing.B) {
 		for range b.N {
@@ -584,7 +584,7 @@ func BenchmarkErrnieErrorWith(b *testing.B) {
 BenchmarkErrnieErrorError measures Error string formatting.
 */
 func BenchmarkErrnieErrorError(b *testing.B) {
-	err := E(Validation, "invalid email", nil).Operation("user.create")
+	err := Err(Validation, "invalid email", nil).Operation("user.create")
 
 	b.ResetTimer()
 	for range b.N {
@@ -596,7 +596,7 @@ func BenchmarkErrnieErrorError(b *testing.B) {
 BenchmarkErrnieErrorUnwrap measures Unwrap on wrapped errors.
 */
 func BenchmarkErrnieErrorUnwrap(b *testing.B) {
-	err := E(IO, "read", benchmarkStaticCause)
+	err := Err(IO, "read", benchmarkStaticCause)
 
 	b.ResetTimer()
 	for range b.N {
@@ -634,7 +634,7 @@ func BenchmarkCombine(b *testing.B) {
 BenchmarkAsErrnie measures typed extraction from wrapped errors.
 */
 func BenchmarkAsErrnie(b *testing.B) {
-	inner := E(NotFound, "missing", nil)
+	inner := Err(NotFound, "missing", nil)
 	outer := fmt.Errorf("wrap: %w", inner)
 
 	b.ResetTimer()
@@ -647,7 +647,7 @@ func BenchmarkAsErrnie(b *testing.B) {
 BenchmarkIsKind measures kind classification through wrapping.
 */
 func BenchmarkIsKind(b *testing.B) {
-	err := fmt.Errorf("wrap: %w", E(Conflict, "duplicate", nil))
+	err := fmt.Errorf("wrap: %w", Err(Conflict, "duplicate", nil))
 
 	b.ResetTimer()
 	for range b.N {
@@ -659,7 +659,7 @@ func BenchmarkIsKind(b *testing.B) {
 BenchmarkIsNotFound measures the NotFound classification helper.
 */
 func BenchmarkIsNotFound(b *testing.B) {
-	err := fmt.Errorf("wrap: %w", E(NotFound, "missing", nil))
+	err := fmt.Errorf("wrap: %w", Err(NotFound, "missing", nil))
 
 	b.ResetTimer()
 	for range b.N {
@@ -671,10 +671,10 @@ func BenchmarkIsNotFound(b *testing.B) {
 BenchmarkIsContext measures context cancellation detection.
 */
 func BenchmarkIsContext(b *testing.B) {
-	err := E(Timeout, "cancelled", context.Canceled)
+	err := Err(Timeout, "cancelled", context.Canceled)
 
-	b.ResetTimer()
-	for range b.N {
+	
+	for b.Loop() {
 		benchmarkErrnieBoolSink = IsContext(err)
 	}
 }
@@ -683,9 +683,8 @@ func BenchmarkIsContext(b *testing.B) {
 BenchmarkKindString measures Kind name formatting.
 */
 func BenchmarkKindString(b *testing.B) {
-	for range b.N {
-		benchmarkErrnieKindSink = NotFound
-		benchmarkErrnieMessageSink = benchmarkErrnieKindSink.String()
+	for b.Loop() {
+		_ = NotFound
 	}
 }
 
