@@ -3,6 +3,7 @@ package errnie
 import (
 	"context"
 	"errors"
+	"io"
 )
 
 /*
@@ -13,17 +14,29 @@ HTTP-specific codes; map transport status at the boundary layer.
 type Kind error
 
 var (
-	Unknown      Kind = errors.New("unknown")
-	Validation   Kind = errors.New("validation")
-	IO           Kind = errors.New("io")
-	Network      Kind = errors.New("network")
-	HTTP         Kind = errors.New("http")
-	Database     Kind = errors.New("database")
-	Unauthorized Kind = errors.New("unauthorized")
-	Forbidden    Kind = errors.New("forbidden")
-	NotFound     Kind = errors.New("not_found")
-	Conflict     Kind = errors.New("conflict")
-	Timeout      Kind = errors.New("timeout")
+	Unknown              Kind = errors.New("unknown")
+	Validation           Kind = errors.New("validation")
+	IO                   Kind = errors.New("io")
+	EOF                  Kind = io.EOF
+	Canceled             Kind = context.Canceled
+	DeadlineExceeded     Kind = context.DeadlineExceeded
+	BadRequest           Kind = errors.New("bad_request")
+	Unauthorized         Kind = errors.New("unauthorized")
+	Forbidden            Kind = errors.New("forbidden")
+	NotFound             Kind = errors.New("not_found")
+	MethodNotAllowed     Kind = errors.New("method_not_allowed")
+	NotAcceptable        Kind = errors.New("not_acceptable")
+	Timeout              Kind = errors.New("timeout")
+	Conflict             Kind = errors.New("conflict")
+	PreconditionFailed   Kind = errors.New("precondition_failed")
+	UnsupportedMedia     Kind = errors.New("unsupported_media_type")
+	ExpectationFailed    Kind = errors.New("expectation_failed")
+	UnprocessableContent Kind = errors.New("unprocessable_content")
+	TooManyRequests      Kind = errors.New("too_many_requests")
+	Internal             Kind = errors.New("internal")
+	NotImplemented       Kind = errors.New("not_implemented")
+	BadGateway           Kind = errors.New("bad_gateway")
+	ServiceUnavailable   Kind = errors.New("service_unavailable")
 )
 
 /*
@@ -305,75 +318,74 @@ func asErrnieInChain(err error) (*ErrnieError, bool) {
 	return nil, false
 }
 
-/*
-IsValidation reports whether err is a validation-class ErrnieError.
-*/
-func IsValidation(err error) bool {
-	return IsKind(err, Validation)
-}
+/* IsUnknown reports whether err is an unknown-class ErrnieError. */
+func IsUnknown(err error) bool { return IsKind(err, Unknown) }
 
-/*
-IsIO reports whether err is an IO-class ErrnieError.
-*/
-func IsIO(err error) bool {
-	return IsKind(err, IO)
-}
+/* IsValidation reports whether err is a validation-class ErrnieError. */
+func IsValidation(err error) bool { return IsKind(err, Validation) }
 
-/*
-IsNetwork reports whether err is a network-class ErrnieError.
-*/
-func IsNetwork(err error) bool {
-	return IsKind(err, Network)
-}
+/* IsIO reports whether err is an IO-class ErrnieError. */
+func IsIO(err error) bool { return IsKind(err, IO) }
 
-/*
-IsHTTP reports whether err is an HTTP-class ErrnieError.
-*/
-func IsHTTP(err error) bool {
-	return IsKind(err, HTTP)
-}
+/* IsEOF reports whether err is an EOF-class ErrnieError. */
+func IsEOF(err error) bool { return IsKind(err, EOF) }
 
-/*
-IsDatabase reports whether err is a database-class ErrnieError.
-*/
-func IsDatabase(err error) bool {
-	return IsKind(err, Database)
-}
+/* IsCanceled reports whether err is a canceled-class ErrnieError. */
+func IsCanceled(err error) bool { return IsKind(err, Canceled) }
 
-/*
-IsUnauthorized reports whether err is an unauthorized-class ErrnieError.
-*/
-func IsUnauthorized(err error) bool {
-	return IsKind(err, Unauthorized)
-}
+/* IsDeadlineExceeded reports whether err is a deadline-exceeded-class ErrnieError. */
+func IsDeadlineExceeded(err error) bool { return IsKind(err, DeadlineExceeded) }
 
-/*
-IsForbidden reports whether err is a forbidden-class ErrnieError.
-*/
-func IsForbidden(err error) bool {
-	return IsKind(err, Forbidden)
-}
+/* IsBadRequest reports whether err is a bad-request-class ErrnieError. */
+func IsBadRequest(err error) bool { return IsKind(err, BadRequest) }
 
-/*
-IsNotFound reports whether err is a not-found-class ErrnieError.
-*/
-func IsNotFound(err error) bool {
-	return IsKind(err, NotFound)
-}
+/* IsUnauthorized reports whether err is an unauthorized-class ErrnieError. */
+func IsUnauthorized(err error) bool { return IsKind(err, Unauthorized) }
 
-/*
-IsConflict reports whether err is a conflict-class ErrnieError.
-*/
-func IsConflict(err error) bool {
-	return IsKind(err, Conflict)
-}
+/* IsForbidden reports whether err is a forbidden-class ErrnieError. */
+func IsForbidden(err error) bool { return IsKind(err, Forbidden) }
 
-/*
-IsTimeout reports whether err is a timeout-class ErrnieError.
-*/
-func IsTimeout(err error) bool {
-	return IsKind(err, Timeout)
-}
+/* IsNotFound reports whether err is a not-found-class ErrnieError. */
+func IsNotFound(err error) bool { return IsKind(err, NotFound) }
+
+/* IsMethodNotAllowed reports whether err is a method-not-allowed-class ErrnieError. */
+func IsMethodNotAllowed(err error) bool { return IsKind(err, MethodNotAllowed) }
+
+/* IsNotAcceptable reports whether err is a not-acceptable-class ErrnieError. */
+func IsNotAcceptable(err error) bool { return IsKind(err, NotAcceptable) }
+
+/* IsTimeout reports whether err is a timeout-class ErrnieError. */
+func IsTimeout(err error) bool { return IsKind(err, Timeout) }
+
+/* IsConflict reports whether err is a conflict-class ErrnieError. */
+func IsConflict(err error) bool { return IsKind(err, Conflict) }
+
+/* IsPreconditionFailed reports whether err is a precondition-failed-class ErrnieError. */
+func IsPreconditionFailed(err error) bool { return IsKind(err, PreconditionFailed) }
+
+/* IsUnsupportedMedia reports whether err is an unsupported-media-class ErrnieError. */
+func IsUnsupportedMedia(err error) bool { return IsKind(err, UnsupportedMedia) }
+
+/* IsExpectationFailed reports whether err is an expectation-failed-class ErrnieError. */
+func IsExpectationFailed(err error) bool { return IsKind(err, ExpectationFailed) }
+
+/* IsUnprocessableContent reports whether err is an unprocessable-content-class ErrnieError. */
+func IsUnprocessableContent(err error) bool { return IsKind(err, UnprocessableContent) }
+
+/* IsTooManyRequests reports whether err is a too-many-requests-class ErrnieError. */
+func IsTooManyRequests(err error) bool { return IsKind(err, TooManyRequests) }
+
+/* IsInternal reports whether err is an internal-class ErrnieError. */
+func IsInternal(err error) bool { return IsKind(err, Internal) }
+
+/* IsNotImplemented reports whether err is a not-implemented-class ErrnieError. */
+func IsNotImplemented(err error) bool { return IsKind(err, NotImplemented) }
+
+/* IsBadGateway reports whether err is a bad-gateway-class ErrnieError. */
+func IsBadGateway(err error) bool { return IsKind(err, BadGateway) }
+
+/* IsServiceUnavailable reports whether err is a service-unavailable-class ErrnieError. */
+func IsServiceUnavailable(err error) bool { return IsKind(err, ServiceUnavailable) }
 
 /*
 IsContext reports whether err is context.Canceled or context.DeadlineExceeded,
