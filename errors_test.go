@@ -87,7 +87,7 @@ TestErrnieErrorWith verifies structured metadata attachment.
 */
 func TestErrnieErrorWith(t *testing.T) {
 	Convey("Given an ErrnieError from E", t, func() {
-		err := Err(HTTP, "request failed", nil)
+		err := Err(Internal, "request failed", nil)
 
 		Convey("When With is called with key/value pairs", func() {
 			same := err.With("status", 500, "url", "https://example.com")
@@ -352,40 +352,40 @@ func TestIsIO(t *testing.T) {
 }
 
 /*
-TestIsNetwork verifies network error classification.
+TestIsBadGateway verifies bad-gateway error classification.
 */
-func TestIsNetwork(t *testing.T) {
-	Convey("Given a network ErrnieError", t, func() {
-		err := Err(Network, "dial failed", nil)
+func TestIsBadGateway(t *testing.T) {
+	Convey("Given a bad-gateway ErrnieError", t, func() {
+		err := Err(BadGateway, "upstream unreachable", nil)
 
-		Convey("When IsNetwork is called", func() {
-			So(IsNetwork(err), ShouldBeTrue)
+		Convey("When IsBadGateway is called", func() {
+			So(IsBadGateway(err), ShouldBeTrue)
 		})
 	})
 }
 
 /*
-TestIsHTTP verifies HTTP error classification.
+TestIsInternal verifies internal error classification.
 */
-func TestIsHTTP(t *testing.T) {
-	Convey("Given an HTTP ErrnieError", t, func() {
-		err := Err(HTTP, "bad response", nil)
+func TestIsInternal(t *testing.T) {
+	Convey("Given an internal ErrnieError", t, func() {
+		err := Err(Internal, "bad response", nil)
 
-		Convey("When IsHTTP is called", func() {
-			So(IsHTTP(err), ShouldBeTrue)
+		Convey("When IsInternal is called", func() {
+			So(IsInternal(err), ShouldBeTrue)
 		})
 	})
 }
 
 /*
-TestIsDatabase verifies database error classification.
+TestIsServiceUnavailable verifies service-unavailable error classification.
 */
-func TestIsDatabase(t *testing.T) {
-	Convey("Given a database ErrnieError", t, func() {
-		err := Err(Database, "query failed", nil)
+func TestIsServiceUnavailable(t *testing.T) {
+	Convey("Given a service-unavailable ErrnieError", t, func() {
+		err := Err(ServiceUnavailable, "database unavailable", nil)
 
-		Convey("When IsDatabase is called", func() {
-			So(IsDatabase(err), ShouldBeTrue)
+		Convey("When IsServiceUnavailable is called", func() {
+			So(IsServiceUnavailable(err), ShouldBeTrue)
 		})
 	})
 }
@@ -483,23 +483,35 @@ TestKindString verifies stable kind names for logging.
 func TestKindString(t *testing.T) {
 	Convey("Given each Kind constant", t, func() {
 		cases := map[Kind]string{
-			Unknown:      "unknown",
-			Validation:   "validation",
-			IO:           "io",
-			Network:      "network",
-			HTTP:         "http",
-			Database:     "database",
-			Unauthorized: "unauthorized",
-			Forbidden:    "forbidden",
-			NotFound:     "not_found",
-			Conflict:     "conflict",
-			Timeout:      "timeout",
+			Unknown:              "unknown",
+			Validation:           "validation",
+			IO:                   "io",
+			EOF:                  "EOF",
+			Canceled:             "context canceled",
+			DeadlineExceeded:     "context deadline exceeded",
+			BadRequest:           "bad_request",
+			Unauthorized:         "unauthorized",
+			Forbidden:            "forbidden",
+			NotFound:             "not_found",
+			MethodNotAllowed:     "method_not_allowed",
+			NotAcceptable:        "not_acceptable",
+			Timeout:              "timeout",
+			Conflict:             "conflict",
+			PreconditionFailed:   "precondition_failed",
+			UnsupportedMedia:     "unsupported_media_type",
+			ExpectationFailed:    "expectation_failed",
+			UnprocessableContent: "unprocessable_content",
+			TooManyRequests:      "too_many_requests",
+			Internal:             "internal",
+			NotImplemented:       "not_implemented",
+			BadGateway:           "bad_gateway",
+			ServiceUnavailable:   "service_unavailable",
 		}
 
-		Convey("When String is called", func() {
+		Convey("When Error is called", func() {
 			Convey("Then it should return the expected name", func() {
 				for kind, name := range cases {
-					So(Kind(kind), ShouldEqual, name)
+					So(kind.Error(), ShouldEqual, name)
 				}
 			})
 		})
@@ -571,7 +583,7 @@ func BenchmarkErrnieErrorOperation(b *testing.B) {
 BenchmarkErrnieErrorWith measures metadata attachment.
 */
 func BenchmarkErrnieErrorWith(b *testing.B) {
-	err := Err(HTTP, "request failed", nil)
+	err := Err(Internal, "request failed", nil)
 
 	b.Run("two fields", func(b *testing.B) {
 		for range b.N {
@@ -673,7 +685,6 @@ BenchmarkIsContext measures context cancellation detection.
 func BenchmarkIsContext(b *testing.B) {
 	err := Err(Timeout, "cancelled", context.Canceled)
 
-	
 	for b.Loop() {
 		benchmarkErrnieBoolSink = IsContext(err)
 	}
@@ -684,7 +695,8 @@ BenchmarkKindString measures Kind name formatting.
 */
 func BenchmarkKindString(b *testing.B) {
 	for b.Loop() {
-		_ = NotFound
+		benchmarkErrnieKindSink = NotFound
+		_ = benchmarkErrnieKindSink.Error()
 	}
 }
 
