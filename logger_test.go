@@ -214,6 +214,33 @@ func TestError(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given an ErrnieError with attached fields", t, func() {
+		buffer := configureTestLogger(t, log.ErrorLevel)
+		expected := Err(Validation, "payload is empty", nil).With(
+			"origin", "kraken:public",
+			"role", "trade",
+			"scope", "update",
+		)
+
+		Convey("When Error is called", func() {
+			result := Error(expected)
+
+			Convey("Then it should log the attached fields", func() {
+				So(result, ShouldEqual, expected)
+
+				logLine := buffer.String()
+
+				So(logLine, ShouldContainSubstring, "payload is empty")
+				So(logLine, ShouldContainSubstring, "origin")
+				So(logLine, ShouldContainSubstring, "kraken:public")
+				So(logLine, ShouldContainSubstring, "role")
+				So(logLine, ShouldContainSubstring, "trade")
+				So(logLine, ShouldContainSubstring, "scope")
+				So(logLine, ShouldContainSubstring, "update")
+			})
+		})
+	})
 }
 
 /*

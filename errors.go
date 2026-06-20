@@ -3,6 +3,7 @@ package errnie
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -169,6 +170,7 @@ func (err *ErrnieError) Error() string {
 	}
 
 	message := err.Message
+
 	if message == "" && err.Cause != nil {
 		message = err.Cause.Error()
 	}
@@ -181,6 +183,12 @@ func (err *ErrnieError) Error() string {
 		err.rendered = err.Op + ": " + message
 	} else {
 		err.rendered = message
+	}
+
+	fields := err.Fields()
+
+	for index := 0; index+1 < len(fields); index += 2 {
+		err.rendered += fmt.Sprintf(" %s=%v", fields[index], fields[index+1])
 	}
 
 	return err.rendered

@@ -178,7 +178,19 @@ Examples:
 */
 func Error(err error, fields ...any) error {
 	if err != nil && !loggingSuppressed() {
-		logger.handle.Error().Err(err).KeysAndValues(fields).Msg("")
+		logFields := fields
+
+		if errnieError, ok := AsErrnie(err); ok {
+			if attached := errnieError.Fields(); len(attached) > 0 {
+				logFields = append(append([]any(nil), attached...), fields...)
+			}
+
+			logger.handle.Error().Err(errnieError).KeysAndValues(logFields...).Msg("")
+
+			return err
+		}
+
+		logger.handle.Error().Err(err).KeysAndValues(fields...).Msg("")
 	}
 
 	return err

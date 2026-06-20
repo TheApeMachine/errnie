@@ -157,6 +157,21 @@ func TestErrnieErrorError(t *testing.T) {
 		})
 	})
 
+	Convey("Given an ErrnieError with attached fields", t, func() {
+		err := Err(Validation, "payload is empty", nil).With(
+			"origin", "kraken:public",
+			"role", "trade",
+		)
+
+		Convey("When Error is called", func() {
+			text := err.Error()
+
+			Convey("Then it should append the fields to the message", func() {
+				So(text, ShouldEqual, "payload is empty origin=kraken:public role=trade")
+			})
+		})
+	})
+
 	Convey("Given an ErrnieError with operation and empty message", t, func() {
 		err := Err(Unknown, "", errors.New("underlying"))
 
