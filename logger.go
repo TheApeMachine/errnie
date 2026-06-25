@@ -2,6 +2,7 @@ package errnie
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -177,6 +178,10 @@ Examples:
 ```
 */
 func Error(err error, fields ...any) error {
+	if err == io.EOF {
+		return err
+	}
+
 	if err != nil && !loggingSuppressed() {
 		logFields := fields
 
