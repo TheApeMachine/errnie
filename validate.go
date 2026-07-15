@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+var validatorCtx *Validator
+
+func init() {
+	validatorCtx = NewValidator()
+}
+
 /*
 ValidationError identifies the field and rule that rejected one value.
 */
@@ -107,7 +113,7 @@ type Validator struct {
 }
 
 /* New constructs a Validator with the built-in rules. */
-func New() *Validator {
+func NewValidator() *Validator {
 	return &Validator{
 		rules: map[string]ruleDefinition{
 			"required":    {validate: validateRequired},
@@ -125,15 +131,15 @@ func New() *Validator {
 /*
 RegisterRule adds or replaces a custom rule and invalidates compiled schemas.
 */
-func (validator *Validator) RegisterRule(name string, rule RuleFunc) {
+func RegisterRule(name string, rule RuleFunc) {
 	name = strings.TrimSpace(name)
 
 	if name == "" || rule == nil {
 		panic("validation rule requires a name and function")
 	}
 
-	validator.rules[name] = ruleDefinition{validate: rule}
-	clear(validator.schemas)
+	validatorCtx.rules[name] = ruleDefinition{validate: rule}
+	clear(validatorCtx.schemas)
 }
 
 /*
@@ -141,14 +147,14 @@ Validate recursively checks tagged fields, nested structs and collections, and
 StructValidator rules. Schema mistakes are Internal errors; rejected values are
 Validation errors.
 */
-func (validator *Validator) Validate(input any) error {
+func Validate(input any) error {
 	value := reflect.ValueOf(input)
 
 	if err := requireStruct(value); err != nil {
 		return Err(Validation, err.Error(), nil)
 	}
 
-	failures, domainErr, configurationErr := validator.walk(
+	failures, domainErr, configurationErr := walk(
 		value, "", make(map[visit]struct{}),
 	)
 
@@ -176,7 +182,7 @@ func (validator *Validator) Validate(input any) error {
 }
 
 /* walk recursively validates one reflected value while cutting pointer cycles. */
-func (validator *Validator) walk(
+func walk(
 	value reflect.Value,
 	path string,
 	visited map[visit]struct{},
@@ -192,7 +198,7 @@ func (validator *Validator) walk(
 	}
 
 	if kind == reflect.Interface {
-		return validator.walk(value.Elem(), path, visited)
+		return walk(value.Elem(), path, visited)
 	}
 
 	if kind == reflect.Pointer {
@@ -203,7 +209,7 @@ func (validator *Validator) walk(
 		}
 
 		visited[identity] = struct{}{}
-		failures, domainErr, configurationErr := validator.walk(
+		failures, domainErr, configurationErr := walk(
 			value.Elem(), path, visited,
 		)
 		delete(visited, identity)
@@ -213,14 +219,14 @@ func (validator *Validator) walk(
 
 	switch kind {
 	case reflect.Struct:
-		return validator.validateStruct(value, path, visited)
+		return validateStruct(value, path, visited)
 	case reflect.Slice, reflect.Array:
 		var failures ValidationErrors
 		var domainErr error
 
 		for index := range value.Len() {
 			itemPath := fmt.Sprintf("%s[%d]", path, index)
-			nested, nestedErr, configurationErr := validator.walk(
+			nested, nestedErr, configurationErr := walk(
 				value.Index(index), itemPath, visited,
 			)
 			failures = append(failures, nested...)
@@ -238,12 +244,12 @@ func (validator *Validator) walk(
 }
 
 /* validateStruct applies a cached schema and then recurses into its fields. */
-func (validator *Validator) validateStruct(
+func validateStruct(
 	value reflect.Value,
 	path string,
 	visited map[visit]struct{},
 ) (ValidationErrors, error, error) {
-	schema := validator.schema(value.Type())
+	schema := schema(value.Type())
 
 	if schema.err != nil {
 		return nil, nil, schema.err
@@ -271,7 +277,7 @@ func (validator *Validator) validateStruct(
 		}
 
 		if field.nested {
-			nested, nestedErr, configurationErr := validator.walk(
+			nested, nestedErr, configurationErr := walk(
 				fieldValue, fieldPath, visited,
 			)
 			failures = append(failures, nested...)
@@ -287,19 +293,19 @@ func (validator *Validator) validateStruct(
 }
 
 /* schema returns one parse-once compiled schema for a struct type. */
-func (validator *Validator) schema(typeOf reflect.Type) *structSchema {
-	if compiled, exists := validator.schemas[typeOf]; exists {
+func schema(typeOf reflect.Type) *structSchema {
+	if compiled, exists := validatorCtx.schemas[typeOf]; exists {
 		return compiled
 	}
 
-	compiled := validator.compile(typeOf)
-	validator.schemas[typeOf] = compiled
+	compiled := compile(typeOf)
+	validatorCtx.schemas[typeOf] = compiled
 
 	return compiled
 }
 
 /* compile parses field tags and rule parameters outside the validation path. */
-func (validator *Validator) compile(typeOf reflect.Type) *structSchema {
+func compile(typeOf reflect.Type) *structSchema {
 	schema := &structSchema{}
 
 	for index := range typeOf.NumField() {
@@ -329,7 +335,7 @@ func (validator *Validator) compile(typeOf reflect.Type) *structSchema {
 				continue
 			}
 
-			definition, exists := validator.rules[name]
+			definition, exists := validatorCtx.rules[name]
 
 			if !exists {
 				schema.err = fmt.Errorf("%s uses unknown rule %q", field.name, name)

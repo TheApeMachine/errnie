@@ -93,7 +93,7 @@ func TestValidatorValidate(t *testing.T) {
 		}
 
 		Convey("When it is validated", func() {
-			err := New().Validate(&fixture)
+			err := Validate(&fixture)
 
 			Convey("Then every built-in rule accepts it", func() {
 				So(err, ShouldBeNil)
@@ -109,7 +109,7 @@ func TestValidatorValidate(t *testing.T) {
 		}
 
 		Convey("When it is validated", func() {
-			err := New().Validate(fixture)
+			err := Validate(fixture)
 
 			Convey("Then all data failures are returned as validation errors", func() {
 				So(err, ShouldNotBeNil)
@@ -129,7 +129,7 @@ func TestValidatorValidate(t *testing.T) {
 		fixture := crossFieldFixture{Name: "book", From: 2, Through: 1}
 
 		Convey("When it is validated", func() {
-			err := New().Validate(fixture)
+			err := Validate(fixture)
 
 			Convey("Then its StructValidator invariant is preserved as a validation error", func() {
 				So(err, ShouldNotBeNil)
@@ -140,13 +140,12 @@ func TestValidatorValidate(t *testing.T) {
 	})
 
 	Convey("Given invalid validator inputs", t, func() {
-		validator := New()
 		var fixture *validationFixture
 
 		Convey("When nil and non-struct values are validated", func() {
 			Convey("Then both fail explicitly as validation errors", func() {
-				nilErr := validator.Validate(fixture)
-				valueErr := validator.Validate("book")
+				nilErr := Validate(fixture)
+				valueErr := Validate("book")
 				So(IsValidation(nilErr), ShouldBeTrue)
 				So(nilErr.Error(), ShouldContainSubstring, "cannot validate nil pointer")
 				So(IsValidation(valueErr), ShouldBeTrue)
@@ -164,8 +163,8 @@ func TestValidatorValidate(t *testing.T) {
 		}
 
 		Convey("When their schemas are evaluated", func() {
-			unknownErr := New().Validate(unknownFixture{Value: "value"})
-			parameterErr := New().Validate(parameterFixture{Value: 1})
+			unknownErr := Validate(unknownFixture{Value: "value"})
+			parameterErr := Validate(parameterFixture{Value: 1})
 
 			Convey("Then programmer errors are not mislabeled as bad runtime data", func() {
 				So(IsInternal(unknownErr), ShouldBeTrue)
@@ -182,7 +181,7 @@ func TestValidatorValidate(t *testing.T) {
 		}
 
 		Convey("When its schema is evaluated", func() {
-			err := New().Validate(hiddenFixture{})
+			err := Validate(hiddenFixture{})
 
 			Convey("Then the silently unreachable rule is a configuration error", func() {
 				So(IsInternal(err), ShouldBeTrue)
@@ -195,8 +194,8 @@ func TestValidatorValidate(t *testing.T) {
 		type evenFixture struct {
 			Value int `validate:"even"`
 		}
-		validator := New()
-		validator.RegisterRule("even", func(value reflect.Value, _ string) error {
+
+		RegisterRule("even", func(value reflect.Value, _ string) error {
 			if value.Int()%2 != 0 {
 				return errors.New("must be even")
 			}
@@ -206,19 +205,17 @@ func TestValidatorValidate(t *testing.T) {
 
 		Convey("When matching and non-matching values are validated", func() {
 			Convey("Then the custom rule participates in normal validation", func() {
-				So(validator.Validate(evenFixture{Value: 2}), ShouldBeNil)
-				So(validator.Validate(evenFixture{Value: 3}).Error(),
+				So(Validate(evenFixture{Value: 2}), ShouldBeNil)
+				So(Validate(evenFixture{Value: 3}).Error(),
 					ShouldContainSubstring, "Value: must be even")
 			})
 		})
 	})
 
 	Convey("Given an empty custom rule registration", t, func() {
-		validator := New()
-
 		Convey("When registration is attempted", func() {
 			Convey("Then the programmer error fails immediately", func() {
-				So(func() { validator.RegisterRule("", nil) }, ShouldPanic)
+				So(func() { RegisterRule("", nil) }, ShouldPanic)
 			})
 		})
 	})
@@ -238,7 +235,7 @@ func TestValidatorRecursive(t *testing.T) {
 		}
 
 		Convey("When the root value is validated", func() {
-			err := New().Validate(&fixture)
+			err := Validate(&fixture)
 
 			Convey("Then every nested failure retains its full path", func() {
 				So(IsValidation(err), ShouldBeTrue)
@@ -256,7 +253,7 @@ func TestValidatorRecursive(t *testing.T) {
 
 		Convey("When it is recursively validated", func() {
 			Convey("Then the pointer cycle terminates without duplicating work", func() {
-				So(New().Validate(fixture), ShouldBeNil)
+				So(Validate(fixture), ShouldBeNil)
 			})
 		})
 	})
@@ -265,7 +262,6 @@ func TestValidatorRecursive(t *testing.T) {
 /* TestValidatorSchemaCache verifies parse-once reuse and invalidation. */
 func TestValidatorSchemaCache(t *testing.T) {
 	Convey("Given a configured validator and valid fixture", t, func() {
-		validator := New()
 		ratio := 0.5
 		fixture := validationFixture{
 			Name: "book", Count: 2, Ratio: &ratio,
@@ -274,10 +270,10 @@ func TestValidatorSchemaCache(t *testing.T) {
 		typeOf := reflect.TypeOf(fixture)
 
 		Convey("When the same type is validated repeatedly", func() {
-			So(validator.Validate(&fixture), ShouldBeNil)
-			first, firstExists := validator.schemas[typeOf]
-			So(validator.Validate(&fixture), ShouldBeNil)
-			second, secondExists := validator.schemas[typeOf]
+			So(Validate(&fixture), ShouldBeNil)
+			first, firstExists := validatorCtx.schemas[typeOf]
+			So(Validate(&fixture), ShouldBeNil)
+			second, secondExists := validatorCtx.schemas[typeOf]
 
 			Convey("Then its compiled schema is reused", func() {
 				So(firstExists, ShouldBeTrue)
@@ -287,11 +283,11 @@ func TestValidatorSchemaCache(t *testing.T) {
 		})
 
 		Convey("When a custom rule changes the registry", func() {
-			So(validator.Validate(&fixture), ShouldBeNil)
-			validator.RegisterRule("custom", func(reflect.Value, string) error {
+			So(Validate(&fixture), ShouldBeNil)
+			RegisterRule("custom", func(reflect.Value, string) error {
 				return nil
 			})
-			_, exists := validator.schemas[typeOf]
+			_, exists := validatorCtx.schemas[typeOf]
 
 			Convey("Then stale compiled schemas are removed", func() {
 				So(exists, ShouldBeFalse)
@@ -307,7 +303,6 @@ BenchmarkValidatorValidate measures the real tagged struct path on accepted and
 rejected data.
 */
 func BenchmarkValidatorValidate(b *testing.B) {
-	validator := New()
 	ratio := 0.5
 	valid := validationFixture{
 		Name: "book", Count: 2, Ratio: &ratio,
@@ -317,13 +312,13 @@ func BenchmarkValidatorValidate(b *testing.B) {
 
 	b.Run("valid", func(b *testing.B) {
 		for b.Loop() {
-			benchmarkValidationErr = validator.Validate(&valid)
+			benchmarkValidationErr = Validate(&valid)
 		}
 	})
 
 	b.Run("invalid", func(b *testing.B) {
 		for b.Loop() {
-			benchmarkValidationErr = validator.Validate(&invalid)
+			benchmarkValidationErr = Validate(&invalid)
 		}
 	})
 }
