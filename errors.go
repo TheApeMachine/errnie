@@ -172,7 +172,7 @@ func (err *ErrnieError) Error() string {
 	message := err.Message
 
 	if message == "" && err.Cause != nil {
-		message = err.Cause.Error()
+		message += " | " + err.Cause.Error()
 	}
 
 	if message == "" {
