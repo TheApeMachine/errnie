@@ -46,6 +46,27 @@ func Apply(cfg *Config) {
 }
 
 /*
+AttachWriter appends a Writer to the current default logger after Apply so
+late-constructed sinks (for example a UI websocket bridge) still receive
+entries without replacing stdout or other configured writers.
+*/
+func AttachWriter(writer log.Writer) {
+	if writer == nil {
+		return
+	}
+
+	current := log.DefaultLogger.Writer
+
+	if current == nil {
+		log.DefaultLogger.Writer = writer
+		return
+	}
+
+	multi := log.MultiEntryWriter{current, writer}
+	log.DefaultLogger.Writer = &multi
+}
+
+/*
 loggerCaller returns the phuslu/log caller skip depth. Set disable_caller in
 Config to skip runtime.Caller on hot logging paths.
 */

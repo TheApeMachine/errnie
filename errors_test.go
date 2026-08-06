@@ -180,7 +180,7 @@ func TestErrnieErrorError(t *testing.T) {
 			text := err.Error()
 
 			Convey("Then it should fall back to the cause message", func() {
-				So(text, ShouldEqual, "db.query: underlying")
+				So(text, ShouldEqual, "db.query:  | underlying")
 			})
 		})
 	})
@@ -588,8 +588,7 @@ BenchmarkErrnieErrorOperation measures Operation chaining.
 func BenchmarkErrnieErrorOperation(b *testing.B) {
 	err := Err(NotFound, "missing", nil)
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		benchmarkErrnieSink = err.Operation("user.load")
 	}
 }
@@ -614,7 +613,7 @@ func BenchmarkErrnieErrorError(b *testing.B) {
 	err := Err(Validation, "invalid email", nil).Operation("user.create")
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		benchmarkErrnieMessageSink = err.Error()
 	}
 }
@@ -626,7 +625,7 @@ func BenchmarkErrnieErrorUnwrap(b *testing.B) {
 	err := Err(IO, "read", benchmarkStaticCause)
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		benchmarkErrnieErrorSink = err.Unwrap()
 	}
 }
@@ -639,19 +638,19 @@ func BenchmarkCombine(b *testing.B) {
 	second := errors.New("second")
 
 	b.Run("all nil", func(b *testing.B) {
-		for range b.N {
+		for b.Loop() {
 			benchmarkErrnieErrorSink = Combine(nil, nil)
 		}
 	})
 
 	b.Run("single error", func(b *testing.B) {
-		for range b.N {
+		for b.Loop() {
 			benchmarkErrnieErrorSink = Combine(nil, first, nil)
 		}
 	})
 
 	b.Run("multiple errors", func(b *testing.B) {
-		for range b.N {
+		for b.Loop() {
 			benchmarkErrnieErrorSink = Combine(first, second)
 		}
 	})
@@ -665,7 +664,7 @@ func BenchmarkAsErrnie(b *testing.B) {
 	outer := fmt.Errorf("wrap: %w", inner)
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		benchmarkErrnieSink, benchmarkErrnieBoolSink = AsErrnie(outer)
 	}
 }
@@ -676,8 +675,7 @@ BenchmarkIsKind measures kind classification through wrapping.
 func BenchmarkIsKind(b *testing.B) {
 	err := fmt.Errorf("wrap: %w", Err(Conflict, "duplicate", nil))
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		benchmarkErrnieBoolSink = IsKind(err, Conflict)
 	}
 }
@@ -688,8 +686,7 @@ BenchmarkIsNotFound measures the NotFound classification helper.
 func BenchmarkIsNotFound(b *testing.B) {
 	err := fmt.Errorf("wrap: %w", Err(NotFound, "missing", nil))
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		benchmarkErrnieBoolSink = IsNotFound(err)
 	}
 }

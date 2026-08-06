@@ -70,8 +70,8 @@ func validationType(typeOf reflect.Type, visited map[reflect.Type]struct{}) bool
 			return true
 		}
 
-		for index := range typeOf.NumField() {
-			field := typeOf.Field(index)
+		for field := range typeOf.Fields() {
+			field := field
 			tag := field.Tag.Get("validate")
 
 			if tag != "" && tag != "-" {

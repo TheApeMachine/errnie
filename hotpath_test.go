@@ -118,7 +118,7 @@ func BenchmarkHotpathCombineCleanup(b *testing.B) {
 	first := errors.New("close failed")
 	second := Err(IO, "flush failed", errors.New("io"))
 
-	for range b.N {
+	for b.Loop() {
 		hotpathSink = Combine(first, second)
 	}
 }

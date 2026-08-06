@@ -57,6 +57,30 @@ func TestApply(t *testing.T) {
 }
 
 /*
+TestAttachWriterKeepsExistingSink verifies late sinks compose with the writer
+Apply already installed instead of replacing it.
+*/
+func TestAttachWriterKeepsExistingSink(t *testing.T) {
+	Convey("Given an applied logger and an attached sink", t, func() {
+		Apply(&Config{Level: "error"})
+		received := 0
+		AttachWriter(log.WriterFunc(func(*log.Entry) (int, error) {
+			received++
+			return 0, nil
+		}))
+
+		Convey("When an error is logged", func() {
+			_ = Error(Err(Internal, "overlay probe", nil))
+
+			Convey("Then the attached sink receives the entry", func() {
+				So(received, ShouldBeGreaterThan, 0)
+				So(log.DefaultLogger.Writer, ShouldHaveSameTypeAs, &log.MultiEntryWriter{})
+			})
+		})
+	})
+}
+
+/*
 TestBuildWriter verifies stdout-only and multi-sink writer assembly.
 */
 func TestBuildWriter(t *testing.T) {
@@ -392,7 +416,7 @@ func BenchmarkApply(b *testing.B) {
 	cfg := &Config{Level: "info"}
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		Apply(cfg)
 	}
 }
@@ -440,7 +464,7 @@ func BenchmarkParseLogLevel(b *testing.B) {
 BenchmarkNewLogger measures Logger construction.
 */
 func BenchmarkNewLogger(b *testing.B) {
-	for range b.N {
+	for b.Loop() {
 		benchmarkLoggerInstanceSink = NewLogger()
 	}
 }
