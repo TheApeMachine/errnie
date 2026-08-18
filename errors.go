@@ -171,10 +171,6 @@ func (err *ErrnieError) Error() string {
 
 	message := err.Message
 
-	if message == "" && err.Cause != nil {
-		message += " | " + err.Cause.Error()
-	}
-
 	if message == "" {
 		message = err.Kind.Error()
 	}
@@ -189,6 +185,10 @@ func (err *ErrnieError) Error() string {
 
 	for index := 0; index+1 < len(fields); index += 2 {
 		err.rendered += fmt.Sprintf(" %s=%v", fields[index], fields[index+1])
+	}
+
+	if err.Cause != nil {
+		err.rendered += " | " + err.Cause.Error()
 	}
 
 	return err.rendered
