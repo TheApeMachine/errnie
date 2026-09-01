@@ -277,6 +277,44 @@ Supported log levels: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `panic
 
 ---
 
+### Console output — readable in a terminal, JSON everywhere else
+
+When stdout is a terminal, errnie renders logs as colored, emoji-labeled lines instead of raw JSON. Wrapped errors are unfolded into an indented cause tree, so a chain reads top-down instead of running off the right edge of the screen.
+
+```
+02:20:48  ⛔ ERROR  strategy.(*Strategy).Step @ strategy.go:66  🧨 [internal] strategy: observe envelope pair=FIL/USD
+  └─ strategy: measurement depthflow:FIL/USD:1788222047953022000 failed
+     └─ calculus: quotient denominator must be non-zero
+```
+
+Each line carries the clock time, a level badge, the call site, an error-kind badge, the message, and the structured fields — with the cause chain broken out underneath.
+
+Detection is automatic and only affects **stdout**. The file and Elasticsearch sinks always receive JSON, and piping or redirecting stdout falls back to JSON too, so `jq` and log shippers keep working unchanged:
+
+```bash
+myapp             # pretty, colored output
+myapp | jq .      # JSON, exactly as before
+```
+
+Override the detection when you need to:
+
+```yaml
+level: info
+console: on    # "on"/"off" — omit to auto-detect
+```
+
+Or from the environment, which takes precedence over config-free detection:
+
+```bash
+ERRNIE_CONSOLE=true myapp | less -R   # force pretty output through a pipe
+ERRNIE_CONSOLE=false myapp            # force JSON in a terminal
+NO_COLOR=1 myapp                      # honored when no explicit override is set
+```
+
+Rendering happens on the writer, not on the logging call, so disabled levels cost nothing extra. The pretty path does more work per line than raw JSON — that is the intended trade for interactive use, and it is off automatically wherever output is machine-read.
+
+---
+
 ### `SuppressLogging` — quiet during tests
 
 Disable errnie logging for a scope and restore it when done. Useful in tests or REPL sessions where expected errors would clutter output.

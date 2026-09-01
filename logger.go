@@ -24,7 +24,7 @@ func init() {
 		Caller:     callerSkip,
 		TimeField:  "date",
 		TimeFormat: "2006-01-02 15:04:05",
-		Writer:     log.IOWriter{Writer: os.Stdout},
+		Writer:     stdoutWriter(nil),
 	}
 
 	logger = NewLogger()
@@ -85,7 +85,7 @@ in cfg.
 */
 func buildWriter(cfg *Config) log.Writer {
 	writers := make([]log.Writer, 0, 3)
-	writers = append(writers, log.IOWriter{Writer: os.Stdout})
+	writers = append(writers, stdoutWriter(cfg))
 
 	if cfg.File.Active && strings.TrimSpace(cfg.File.Path) != "" {
 		writers = append(writers, &log.FileWriter{
@@ -122,6 +122,36 @@ func buildWriter(cfg *Config) log.Writer {
 	multi := log.MultiEntryWriter(writers)
 
 	return &multi
+}
+
+/*
+stdoutWriter returns the stdout sink. It renders human-friendly colored output
+when the console renderer is active for cfg, and raw JSON otherwise so piped
+and redirected output stays machine-readable.
+*/
+func stdoutWriter(cfg *Config) log.Writer {
+	if consoleActive(cfg) {
+		return newConsoleWriter(os.Stdout)
+	}
+
+	return log.IOWriter{Writer: os.Stdout}
+}
+
+/*
+consoleActive resolves whether pretty console rendering applies. Config.Console
+overrides detection when set to "on" or "off"; otherwise stdout is probed.
+*/
+func consoleActive(cfg *Config) bool {
+	if cfg != nil {
+		switch strings.ToLower(strings.TrimSpace(cfg.Console)) {
+		case "on", "true", "yes", "always":
+			return true
+		case "off", "false", "no", "never":
+			return false
+		}
+	}
+
+	return ConsoleEnabled()
 }
 
 /*
@@ -211,7 +241,13 @@ func Error(err error, fields ...any) error {
 				logFields = append(append([]any(nil), attached...), fields...)
 			}
 
-			logger.handle.Error().Err(errnieError).KeysAndValues(logFields...).Msg("")
+			event := logger.handle.Error().Err(errnieError)
+
+			if errnieError.Kind != nil {
+				event = event.Str("kind", errnieError.Kind.Error())
+			}
+
+			event.KeysAndValues(logFields...).Msg("")
 
 			return err
 		}
@@ -230,7 +266,7 @@ func Warn(message string, fields ...any) {
 		return
 	}
 
-	logger.handle.Warn().KeysAndValues(fields).Msg(message)
+	logger.handle.Warn().KeysAndValues(fields...).Msg(message)
 }
 
 /*
@@ -241,7 +277,7 @@ func Info(message string, fields ...any) {
 		return
 	}
 
-	logger.handle.Info().KeysAndValues(fields).Msg(message)
+	logger.handle.Info().KeysAndValues(fields...).Msg(message)
 }
 
 /*
@@ -252,7 +288,7 @@ func Debug(message string, fields ...any) {
 		return
 	}
 
-	logger.handle.Debug().KeysAndValues(fields).Msg(message)
+	logger.handle.Debug().KeysAndValues(fields...).Msg(message)
 }
 
 /*
@@ -263,5 +299,5 @@ func Trace(message string, fields ...any) {
 		return
 	}
 
-	logger.handle.Trace().KeysAndValues(fields).Msg(message)
+	logger.handle.Trace().KeysAndValues(fields...).Msg(message)
 }
