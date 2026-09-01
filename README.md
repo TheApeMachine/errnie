@@ -279,15 +279,15 @@ Supported log levels: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `panic
 
 ### Console output — readable in a terminal, JSON everywhere else
 
-When stdout is a terminal, errnie renders logs as colored, emoji-labeled lines instead of raw JSON. Wrapped errors are unfolded into an indented cause tree, so a chain reads top-down instead of running off the right edge of the screen.
+When stdout is a terminal, errnie renders logs as colored, labeled lines instead of raw JSON. Wrapped errors are unfolded into an indented cause tree, so a chain reads top-down instead of running off the right edge of the screen.
 
 ```
-02:20:48  ⛔ ERROR  strategy.(*Strategy).Step @ strategy.go:66  🧨 [internal] strategy: observe envelope pair=FIL/USD
+02:20:48  ERROR  strategy.(*Strategy).Step @ strategy.go:66  🧨 [internal] strategy: observe envelope pair=FIL/USD
   └─ strategy: measurement depthflow:FIL/USD:1788222047953022000 failed
      └─ calculus: quotient denominator must be non-zero
 ```
 
-Each line carries the clock time, a level badge, the call site, an error-kind badge, the message, and the structured fields — with the cause chain broken out underneath.
+Each line carries the clock time, a level badge, a dimmed call site, an error-kind badge, the message, and the structured fields — with the cause chain broken out underneath.
 
 Detection is automatic and only affects **stdout**. The file and Elasticsearch sinks always receive JSON, and piping or redirecting stdout falls back to JSON too, so `jq` and log shippers keep working unchanged:
 

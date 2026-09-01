@@ -19,17 +19,14 @@ const (
 	ansiBold      = "\x1b[1m"
 	ansiDim       = "\x1b[2m"
 	ansiRed       = "\x1b[31m"
-	ansiGreen     = "\x1b[32m"
 	ansiYellow    = "\x1b[33m"
-	ansiBlue      = "\x1b[34m"
-	ansiMagenta   = "\x1b[35m"
 	ansiCyan      = "\x1b[36m"
 	ansiGray      = "\x1b[90m"
+	ansiDarkGray  = "\x1b[38;5;240m"
 	ansiWhiteBold = "\x1b[97m\x1b[1m"
 
 	bgRed     = "\x1b[41m\x1b[97m\x1b[1m"
 	bgYellow  = "\x1b[43m\x1b[30m\x1b[1m"
-	bgGreen   = "\x1b[42m\x1b[30m\x1b[1m"
 	bgBlue    = "\x1b[44m\x1b[97m\x1b[1m"
 	bgMagenta = "\x1b[45m\x1b[97m\x1b[1m"
 	bgGray    = "\x1b[100m\x1b[97m\x1b[1m"
@@ -43,11 +40,10 @@ chain as indented lines.
 const causeSeparator = " | "
 
 /*
-levelStyle describes how one log level is presented: a badge emoji, a fixed
-width label, and the colors used for the badge and the message body.
+levelStyle describes how one log level is presented: a fixed width label and
+the colors used for the badge and the message body.
 */
 type levelStyle struct {
-	emoji   string
 	label   string
 	badge   string
 	message string
@@ -58,16 +54,16 @@ levelStyles maps phuslu/log level names to their console presentation. Unknown
 levels fall back to unknownLevelStyle.
 */
 var levelStyles = map[string]levelStyle{
-	"trace": {emoji: "🔍", label: "TRACE", badge: bgMagenta, message: ansiGray},
-	"debug": {emoji: "🐛", label: "DEBUG", badge: bgBlue, message: ansiGray},
-	"info":  {emoji: "💡", label: "INFO ", badge: bgGreen, message: ansiReset},
-	"warn":  {emoji: "⚠️ ", label: "WARN ", badge: bgYellow, message: ansiYellow},
-	"error": {emoji: "⛔", label: "ERROR", badge: bgRed, message: ansiRed},
-	"fatal": {emoji: "💀", label: "FATAL", badge: bgRed, message: ansiRed + ansiBold},
-	"panic": {emoji: "🔥", label: "PANIC", badge: bgRed, message: ansiRed + ansiBold},
+	"trace": {label: "TRACE", badge: bgMagenta, message: ansiGray},
+	"debug": {label: "DEBUG", badge: bgBlue, message: ansiGray},
+	"info":  {label: "INFO ", badge: bgGray, message: ansiReset},
+	"warn":  {label: "WARN ", badge: bgYellow, message: ansiYellow},
+	"error": {label: "ERROR", badge: bgRed, message: ansiRed},
+	"fatal": {label: "FATAL", badge: bgRed, message: ansiRed + ansiBold},
+	"panic": {label: "PANIC", badge: bgRed, message: ansiRed + ansiBold},
 }
 
-var unknownLevelStyle = levelStyle{emoji: "❔", label: "?????", badge: bgGray, message: ansiGray}
+var unknownLevelStyle = levelStyle{label: "?????", badge: bgGray, message: ansiGray}
 
 /*
 kindEmoji maps an ErrnieError kind name, as emitted in the kind field, to a
@@ -181,7 +177,7 @@ func formatConsoleEntry(out io.Writer, args *log.FormatterArgs) (int, error) {
 	buffer = appendBody(buffer, args, style)
 	buffer = appendFields(buffer, args)
 	buffer = append(buffer, '\n')
-	buffer = appendCauses(buffer, args, style)
+	buffer = appendCauses(buffer, args)
 
 	return out.Write(buffer)
 }
@@ -198,15 +194,13 @@ func appendHeader(buffer []byte, args *log.FormatterArgs, style levelStyle) []by
 
 	buffer = append(buffer, style.badge...)
 	buffer = append(buffer, ' ')
-	buffer = append(buffer, style.emoji...)
-	buffer = append(buffer, ' ')
 	buffer = append(buffer, style.label...)
 	buffer = append(buffer, ' ')
 	buffer = append(buffer, ansiReset...)
 	buffer = append(buffer, ' ')
 
 	if origin := shortOrigin(args); origin != "" {
-		buffer = append(buffer, ansiCyan...)
+		buffer = append(buffer, ansiDarkGray...)
 		buffer = append(buffer, origin...)
 		buffer = append(buffer, ansiReset...)
 		buffer = append(buffer, ' ')
@@ -221,7 +215,7 @@ chain, prefixed by a kind badge when the entry carries one.
 */
 func appendBody(buffer []byte, args *log.FormatterArgs, style levelStyle) []byte {
 	if kind := args.Get("kind"); kind != "" {
-		buffer = append(buffer, ansiMagenta...)
+		buffer = append(buffer, style.message...)
 		buffer = append(buffer, kindBadge(kind)...)
 		buffer = append(buffer, ansiReset...)
 		buffer = append(buffer, ' ')
@@ -268,7 +262,7 @@ func appendFields(buffer []byte, args *log.FormatterArgs) []byte {
 appendCauses writes the wrapped cause chain as indented tree lines. The first
 segment already appears in the header, so only the remainder is rendered.
 */
-func appendCauses(buffer []byte, args *log.FormatterArgs, style levelStyle) []byte {
+func appendCauses(buffer []byte, args *log.FormatterArgs) []byte {
 	causes := causeTail(args.Get("error"))
 
 	for index, cause := range causes {
@@ -276,7 +270,6 @@ func appendCauses(buffer []byte, args *log.FormatterArgs, style levelStyle) []by
 		buffer = appendIndent(buffer, index)
 		buffer = append(buffer, "└─ "...)
 		buffer = append(buffer, ansiReset...)
-		buffer = append(buffer, style.message...)
 		buffer = append(buffer, cause...)
 		buffer = append(buffer, ansiReset...)
 		buffer = append(buffer, '\n')
