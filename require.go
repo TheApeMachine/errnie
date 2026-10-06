@@ -26,9 +26,7 @@ func missingDependency(obj any) bool {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice, reflect.UnsafePointer:
 		return value.IsNil()
 	case reflect.Float64, reflect.Float32:
-		return value.IsZero() || math.IsNaN(value.Float()) || math.IsInf(value.Float(), 0)
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return value.IsZero()
+		return math.IsNaN(value.Float()) || math.IsInf(value.Float(), 0)
 	default:
 		return value.IsZero()
 	}
